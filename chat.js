@@ -474,7 +474,7 @@ class ChatManager {
     const messagesHtml = currentChat.messages.map(message => `
       <div class="message ${message.type}">
         <div class="message-avatar">
-          ${message.type === 'user' ? '👤' : '🛡️'}
+          ${message.type === 'user' ? 'U' : 'AI'}
         </div>
         <div class="message-content">
           ${this.formatMessage(message.content)}
