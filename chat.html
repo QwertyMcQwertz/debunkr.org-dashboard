@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Misinformation Manager - Chat</title>
+  <link rel="stylesheet" href="chat.css">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <div class="sidebar-header">
+        <div class="logo">
+          <span class="logo-icon">🛡️</span>
+          <span class="logo-text">MisInfo Manager</span>
+        </div>
+        <button class="new-chat-btn" id="newChatBtn">
+          <span class="plus-icon">+</span>
+          New Chat
+        </button>
+      </div>
+      
+      <div class="chat-history" id="chatHistory">
+        <!-- Chat items will be dynamically generated -->
+      </div>
+    </div>
+    
+    <!-- Main Chat Area -->
+    <div class="main-content">
+      <div class="chat-header" id="chatHeader" style="display: none;">
+        <div class="chat-source-title" id="chatSourceTitle"></div>
+      </div>
+      
+      <div class="messages-container" id="messagesContainer">
+        <div class="welcome-message">
+          <div class="welcome-icon">💬</div>
+          <h2>Start a new conversation</h2>
+          <p>Type your message below to begin chatting.</p>
+        </div>
+      </div>
+      
+      <div class="input-container">
+        <div class="input-wrapper">
+          <textarea 
+            id="messageInput" 
+            placeholder="Ask me to analyze any information, fact-check claims, or verify sources..."
+            rows="1"
+          ></textarea>
+          <button class="send-button" id="sendButton" disabled>
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+              <path d="M2.5 10L17.5 10M17.5 10L12.5 5M17.5 10L12.5 15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <script src="chat.js"></script>
+</body>
+</html>
