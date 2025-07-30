@@ -230,7 +230,7 @@ class ChatManager {
         emptyChat.sourceUrl = this.pendingSource;
       }
       this.loadChat(emptyChatId);
-      this.preFillInput(true); // Include source for new chats
+      this.preFillInput(false); // Just text, source is in header now
       this.saveToStorage(); // Save the title change
       return;
     }
@@ -257,8 +257,8 @@ class ChatManager {
     this.updateChatHistoryDisplay();
     this.saveToStorage();
     
-    // Pre-fill the input with the selected text (include source)
-    this.preFillInput(true);
+    // Pre-fill the input with just the selected text (source is in header now)
+    this.preFillInput(false);
   }
 
   showChatSelector() {
