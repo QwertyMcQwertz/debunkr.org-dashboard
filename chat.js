@@ -114,6 +114,18 @@ class ChatManager {
       this.createNewChat();
     });
 
+    // Search functionality
+    const searchInput = document.getElementById('chatSearch');
+    searchInput.addEventListener('input', (e) => {
+      this.searchChats(e.target.value);
+    });
+    searchInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        e.target.value = '';
+        this.searchChats('');
+      }
+    });
+
     // Chat history items and actions
     document.addEventListener('click', (e) => {
       // Handle rename button
@@ -364,15 +376,23 @@ class ChatManager {
     this.saveToStorage();
   }
 
-  updateChatHistoryDisplay() {
+  updateChatHistoryDisplay(filteredChats = null) {
     const chatHistory = document.getElementById('chatHistory');
     
+    // Use filtered chats if provided, otherwise use all chats
+    const chatsToDisplay = filteredChats || Array.from(this.chats.values());
+    
     // Sort chats by last activity (most recent first)
-    const sortedChats = Array.from(this.chats.values()).sort((a, b) => {
+    const sortedChats = chatsToDisplay.sort((a, b) => {
       const aTime = new Date(a.lastActivity || 0);
       const bTime = new Date(b.lastActivity || 0);
       return bTime - aTime;
     });
+    
+    if (sortedChats.length === 0) {
+      chatHistory.innerHTML = '<div class="no-results">No chats found</div>';
+      return;
+    }
     
     const chatItemsHtml = sortedChats.map(chat => `
       <div class="chat-item ${chat.id === this.currentChatId ? 'active' : ''}" data-chat-id="${chat.id}">
@@ -398,6 +418,29 @@ class ChatManager {
     `).join('');
     
     chatHistory.innerHTML = chatItemsHtml;
+  }
+
+  searchChats(query) {
+    if (!query.trim()) {
+      // Show all chats if query is empty
+      this.updateChatHistoryDisplay();
+      return;
+    }
+    
+    const searchTerm = query.toLowerCase();
+    const filteredChats = Array.from(this.chats.values()).filter(chat => {
+      // Search in chat title
+      if (chat.title.toLowerCase().includes(searchTerm)) {
+        return true;
+      }
+      
+      // Search in message content
+      return chat.messages.some(message => 
+        message.content.toLowerCase().includes(searchTerm)
+      );
+    });
+    
+    this.updateChatHistoryDisplay(filteredChats);
   }
 
   getLastMessagePreview(chat) {
