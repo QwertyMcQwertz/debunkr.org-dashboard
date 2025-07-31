@@ -55,36 +55,43 @@ class OpenAIClient {
 
   /**
    * Send message to OpenAI Assistant and return response
-   * Creates a new thread, adds message, runs assistant, and polls for completion
+   * Creates thread if needed, adds message, runs assistant, and polls for completion
    * Uses exponential backoff to efficiently wait for response
    * 
    * @param {string} message - User message to send to assistant
-   * @returns {Promise<string>} Assistant's response text
+   * @param {string|null} threadId - Existing thread ID for conversation continuity
+   * @returns {Promise<{response: string, threadId: string}>} Assistant's response and thread ID
    * @throws {Error} If API key missing, API request fails, or timeout occurs
    */
-  async sendMessage(message) {
+  async sendMessage(message, threadId = null) {
     try {
       const apiKey = await this.storageManager.getOpenAIApiKey();
       if (!apiKey) {
         throw new Error('OpenAI API key not configured. Please configure it in Settings.');
       }
 
-      // Create a thread
-      const threadResponse = await fetch('https://api.openai.com/v1/threads', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${apiKey}`,
-          'Content-Type': 'application/json',
-          'OpenAI-Beta': 'assistants=v2'
+      // Create a thread only if we don't have one
+      let thread;
+      if (!threadId) {
+        const threadResponse = await fetch('https://api.openai.com/v1/threads', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${apiKey}`,
+            'Content-Type': 'application/json',
+            'OpenAI-Beta': 'assistants=v2'
+          }
+        });
+
+        if (!threadResponse.ok) {
+          const error = await threadResponse.json();
+          throw new Error(`Failed to create thread: ${error.error?.message || 'Unknown error'}`);
         }
-      });
 
-      if (!threadResponse.ok) {
-        const error = await threadResponse.json();
-        throw new Error(`Failed to create thread: ${error.error?.message || 'Unknown error'}`);
+        thread = await threadResponse.json();
+      } else {
+        // Use existing thread
+        thread = { id: threadId };
       }
-
-      const thread = await threadResponse.json();
 
       // Add message to thread
       const messageResponse = await fetch(`https://api.openai.com/v1/threads/${thread.id}/messages`, {
@@ -127,7 +134,10 @@ class OpenAIClient {
 
       // Poll for completion with exponential backoff
       const response = await this.pollForCompletion(apiKey, thread.id, run.id);
-      return response;
+      return {
+        response: response,
+        threadId: thread.id
+      };
     } catch (error) {
       console.error('Error communicating with OpenAI:', error);
       throw error;

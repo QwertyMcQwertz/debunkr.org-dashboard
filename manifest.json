@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Misinformation Manager",
-  "version": "1.1",
-  "description": "A chat-based misinformation management tool",
+  "name": "debunkr Dashboard",
+  "version": "2.0",
+  "description": "AI-powered misinformation analysis with egalitarian perspective",
   "permissions": [
     "tabs",
     "storage",
@@ -17,7 +17,7 @@
   },
   "action": {
     "default_popup": "popup.html",
-    "default_title": "Open Misinformation Manager"
+    "default_title": "Open debunkr Dashboard"
   },
   "background": {
     "service_worker": "background.js"

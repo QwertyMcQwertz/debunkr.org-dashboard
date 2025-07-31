@@ -1,6 +1,6 @@
 // Background service worker for the extension
 chrome.runtime.onInstalled.addListener(() => {
-  console.log('Misinformation Manager extension installed');
+  console.log('debunkr Dashboard extension installed');
   setupContextMenus();
 });
 
@@ -40,7 +40,7 @@ async function openOrFocusChatTab(urlParams = '') {
   const chatUrl = chrome.runtime.getURL('chat.html') + urlParams;
   const extensionUrl = chrome.runtime.getURL('chat.html');
   
-  // Query for existing MisInfo Manager tabs
+  // Query for existing debunkr Dashboard tabs
   const tabs = await chrome.tabs.query({url: extensionUrl + '*'});
   
   if (tabs.length > 0) {
@@ -71,7 +71,7 @@ async function setupContextMenus() {
     // Create parent menu
     chrome.contextMenus.create({
       id: 'misinfoManager',
-      title: 'MisInfo Manager',
+      title: 'debunkr',
       contexts: ['selection']
     });
     

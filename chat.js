@@ -126,14 +126,25 @@ class ChatManager {
    * Uses event delegation for dynamically created elements
    */
   initializeEventListeners() {
+    // Initialize sidebar state
+    this.sidebarCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+    if (this.sidebarCollapsed) {
+      this.uiManager.getElement('sidebar').classList.add('collapsed');
+    }
+
     // New chat button
     this.uiManager.getElement('newChatBtn').addEventListener('click', () => {
       this.createNewChat();
     });
 
-    // Settings button
+    // Global settings button
     this.uiManager.getElement('settingsBtn').addEventListener('click', () => {
       this.openSettings();
+    });
+
+    // Sidebar collapse button
+    this.uiManager.getElement('collapseBtn').addEventListener('click', () => {
+      this.toggleSidebar();
     });
 
     // Search functionality
@@ -207,7 +218,8 @@ class ChatManager {
       id: newChatId,
       title: 'New Chat',
       messages: [],
-      lastActivity: new Date().toISOString()
+      lastActivity: new Date().toISOString(),
+      threadId: null // OpenAI thread ID for conversation continuity
     };
     
     this.chats.set(newChatId, newChat);
@@ -257,7 +269,8 @@ class ChatManager {
       id: newChatId,
       title: 'New Chat',
       messages: [],
-      lastActivity: new Date().toISOString()
+      lastActivity: new Date().toISOString(),
+      threadId: null // OpenAI thread ID for conversation continuity
     };
     
     this.chats.set(newChatId, newChat);
@@ -302,7 +315,8 @@ class ChatManager {
       title: chatTitle,
       messages: [],
       lastActivity: new Date().toISOString(),
-      sourceUrl: this.pendingSource // Store source for header display
+      sourceUrl: this.pendingSource, // Store source for header display
+      threadId: null // OpenAI thread ID for conversation continuity
     };
     
     this.chats.set(newChatId, newChat);
@@ -589,8 +603,13 @@ class ChatManager {
     this.uiManager.renderMessages(currentChat);
 
     try {
-      // Get response from OpenAI
-      const response = await this.openaiClient.sendMessage(userMessage);
+      // Get response from OpenAI with thread continuity
+      const result = await this.openaiClient.sendMessage(userMessage, currentChat.threadId);
+      
+      // Store thread ID for future messages in this chat
+      if (!currentChat.threadId) {
+        currentChat.threadId = result.threadId;
+      }
       
       // Remove loading message
       const loadingIndex = currentChat.messages.findIndex(msg => msg.id === loadingMessage.id);
@@ -602,7 +621,7 @@ class ChatManager {
       const aiMessage = {
         id: Date.now(),
         type: 'assistant',
-        content: response,
+        content: result.response,
         timestamp: new Date().toISOString()
       };
 
@@ -668,6 +687,24 @@ class ChatManager {
       this.uiManager.updateChatHistoryDisplay(this.chats, this.currentChatId);
       this.storageManager.forceSave(this.chats, this.nextChatId, this.currentChatId);
     }
+  }
+
+  /**
+   * Toggle sidebar collapsed/expanded state
+   * Saves state to localStorage for persistence
+   */
+  toggleSidebar() {
+    const sidebar = this.uiManager.getElement('sidebar');
+    this.sidebarCollapsed = !this.sidebarCollapsed;
+    
+    if (this.sidebarCollapsed) {
+      sidebar.classList.add('collapsed');
+    } else {
+      sidebar.classList.remove('collapsed');
+    }
+    
+    // Save state to localStorage
+    localStorage.setItem('sidebarCollapsed', this.sidebarCollapsed.toString());
   }
 
   extractDomainFromUrl(url) {
