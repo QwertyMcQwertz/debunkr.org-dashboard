@@ -218,7 +218,8 @@ class ChatManager {
       id: newChatId,
       title: 'New Chat',
       messages: [],
-      lastActivity: new Date().toISOString()
+      lastActivity: new Date().toISOString(),
+      threadId: null // OpenAI thread ID for conversation continuity
     };
     
     this.chats.set(newChatId, newChat);
@@ -268,7 +269,8 @@ class ChatManager {
       id: newChatId,
       title: 'New Chat',
       messages: [],
-      lastActivity: new Date().toISOString()
+      lastActivity: new Date().toISOString(),
+      threadId: null // OpenAI thread ID for conversation continuity
     };
     
     this.chats.set(newChatId, newChat);
@@ -313,7 +315,8 @@ class ChatManager {
       title: chatTitle,
       messages: [],
       lastActivity: new Date().toISOString(),
-      sourceUrl: this.pendingSource // Store source for header display
+      sourceUrl: this.pendingSource, // Store source for header display
+      threadId: null // OpenAI thread ID for conversation continuity
     };
     
     this.chats.set(newChatId, newChat);
@@ -600,8 +603,13 @@ class ChatManager {
     this.uiManager.renderMessages(currentChat);
 
     try {
-      // Get response from OpenAI
-      const response = await this.openaiClient.sendMessage(userMessage);
+      // Get response from OpenAI with thread continuity
+      const result = await this.openaiClient.sendMessage(userMessage, currentChat.threadId);
+      
+      // Store thread ID for future messages in this chat
+      if (!currentChat.threadId) {
+        currentChat.threadId = result.threadId;
+      }
       
       // Remove loading message
       const loadingIndex = currentChat.messages.findIndex(msg => msg.id === loadingMessage.id);
@@ -613,7 +621,7 @@ class ChatManager {
       const aiMessage = {
         id: Date.now(),
         type: 'assistant',
-        content: response,
+        content: result.response,
         timestamp: new Date().toISOString()
       };
 

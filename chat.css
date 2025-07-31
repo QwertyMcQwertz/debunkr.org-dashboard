@@ -45,6 +45,14 @@ body {
   margin-right: 0;
 }
 
+.sidebar.collapsed .collapse-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 24px;
+  height: 24px;
+}
+
 .sidebar.collapsed .logo-text-container {
   opacity: 0;
   pointer-events: none;
