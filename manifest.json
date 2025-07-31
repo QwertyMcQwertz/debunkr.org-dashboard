@@ -1,13 +1,16 @@
 {
   "manifest_version": 3,
   "name": "Misinformation Manager",
-  "version": "1.0",
+  "version": "1.1",
   "description": "A chat-based misinformation management tool",
   "permissions": [
     "tabs",
     "storage",
     "contextMenus",
     "activeTab"
+  ],
+  "host_permissions": [
+    "https://api.openai.com/*"
   ],
   "content_security_policy": {
     "extension_pages": "script-src 'self'; object-src 'self'"
@@ -21,7 +24,7 @@
   },
   "web_accessible_resources": [
     {
-      "resources": ["chat.html", "chat.css", "chat.js"],
+      "resources": ["chat.html", "chat.css", "chat.js", "storage-manager.js", "openai-client.js", "ui-manager.js"],
       "matches": ["<all_urls>"]
     }
   ]

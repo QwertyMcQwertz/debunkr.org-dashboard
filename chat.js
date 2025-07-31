@@ -1,15 +1,64 @@
+/**
+ * Main ChatManager Class - Orchestrates Misinformation Manager Extension
+ * 
+ * This is the core class that coordinates all extension functionality including:
+ * - Chat conversation management with persistent storage
+ * - Integration with OpenAI Assistants API for misinformation analysis
+ * - Context menu integration for analyzing web content
+ * - Quote block functionality for highlighted text
+ * - Modular architecture with StorageManager, OpenAIClient, and UIManager
+ * 
+ * Architecture:
+ * - StorageManager: Handles encryption, persistence, and Chrome storage operations
+ * - OpenAIClient: Manages OpenAI API communication with exponential backoff
+ * - UIManager: Controls DOM manipulation, rendering, and user interactions
+ * 
+ * Data Flow:
+ * 1. User selects text on web pages -> Context menu -> Background script
+ * 2. Background script opens extension with text/source parameters
+ * 3. ChatManager processes URL parameters and creates/continues chats
+ * 4. Messages are encrypted and stored via StorageManager
+ * 5. OpenAI responses are processed and displayed with copy functionality
+ * 
+ * @class ChatManager
+ */
 class ChatManager {
+  /**
+   * Initialize ChatManager with modular architecture
+   * Sets up all dependent modules and begins initialization sequence
+   * @constructor
+   */
   constructor() {
+    /** @type {number|null} ID of currently active chat */
     this.currentChatId = null;
+    /** @type {Map<number, Object>} Map of all chat objects keyed by ID */
     this.chats = new Map();
+    /** @type {number} Next available chat ID for new conversations */
     this.nextChatId = 1;
+    /** @type {string|null} Text pending processing from context menu */
     this.pendingText = null;
+    /** @type {string|null} Source URL for pending text */
     this.pendingSource = null;
+    
+    // Initialize modular components
+    /** @type {StorageManager} Handles encryption and persistence */
+    this.storageManager = new StorageManager();
+    /** @type {OpenAIClient} Manages OpenAI API communication */
+    this.openaiClient = new OpenAIClient(this.storageManager);
+    /** @type {UIManager} Controls DOM and user interface */
+    this.uiManager = new UIManager();
+    
+    // Begin initialization sequence
     this.initializeFromURL();
     this.initializeStorage();
     this.initializeEventListeners();
   }
 
+  /**
+   * Parse URL parameters for context menu integration
+   * Handles different action types: newChat, selectChat, continueChat
+   * Extracts and decodes text content and source URLs from URL parameters
+   */
   initializeFromURL() {
     const urlParams = new URLSearchParams(window.location.search);
     const action = urlParams.get('action');
@@ -26,28 +75,18 @@ class ChatManager {
     this.targetChatId = chatId ? parseInt(chatId) : null;
   }
 
+  /**
+   * Initialize application state from Chrome storage
+   * Loads encrypted chat data and handles URL-based actions
+   * Creates initial chat if none exist, otherwise loads most recent
+   * Handles various URL action types for context menu integration
+   */
   async initializeStorage() {
     try {
-      const result = await chrome.storage.local.get(['encryptedChats', 'nextChatId', 'currentChatId']);
-      
-      if (result.encryptedChats) {
-        try {
-          // Decrypt and parse chat data
-          const decryptedData = await this.decryptData(result.encryptedChats);
-          this.chats = new Map(Object.entries(decryptedData).map(([k, v]) => [parseInt(k), v]));
-        } catch (decryptError) {
-          console.warn('Failed to decrypt chat data, starting fresh');
-          this.chats = new Map();
-        }
-      }
-      
-      if (result.nextChatId) {
-        this.nextChatId = result.nextChatId;
-      }
-      
-      if (result.currentChatId) {
-        this.currentChatId = result.currentChatId;
-      }
+      const data = await this.storageManager.loadData();
+      this.chats = data.chats;
+      this.nextChatId = data.nextChatId;
+      this.currentChatId = data.currentChatId;
       
       // Handle URL actions
       if (this.urlAction === 'newChat' && this.pendingText) {
@@ -69,11 +108,11 @@ class ChatManager {
         }
       }
       
-      this.updateChatHistoryDisplay();
+      this.uiManager.updateChatHistoryDisplay(this.chats, this.currentChatId);
       
       // Force save to ensure chatTitles are created for existing chats
       if (this.chats.size > 0) {
-        this.saveToStorage();
+        this.storageManager.debouncedSave(this.chats, this.nextChatId, this.currentChatId);
       }
     } catch (error) {
       console.error('Error loading from storage:', error);
@@ -81,41 +120,24 @@ class ChatManager {
     }
   }
 
-  async saveToStorage() {
-    try {
-      // Convert Map to plain object and encrypt sensitive data
-      const chatsObj = Object.fromEntries(this.chats);
-      const encryptedChats = await this.encryptData(chatsObj);
-      
-      // Also save chat titles separately for context menu (unencrypted for easy access)
-      const chatTitles = {};
-      for (const [chatId, chat] of this.chats) {
-        chatTitles[chatId] = {
-          title: chat.title,
-          lastActivity: chat.lastActivity,
-          hasMessages: chat.messages.length > 0
-        };
-      }
-      
-      await chrome.storage.local.set({
-        encryptedChats: encryptedChats,
-        chatTitles: chatTitles,
-        nextChatId: this.nextChatId,
-        currentChatId: this.currentChatId
-      });
-    } catch (error) {
-      console.error('Error saving to storage:', error);
-    }
-  }
-
+  /**
+   * Set up all DOM event listeners for user interactions
+   * Handles chat management, search, settings, and message operations
+   * Uses event delegation for dynamically created elements
+   */
   initializeEventListeners() {
     // New chat button
-    document.getElementById('newChatBtn').addEventListener('click', () => {
+    this.uiManager.getElement('newChatBtn').addEventListener('click', () => {
       this.createNewChat();
     });
 
+    // Settings button
+    this.uiManager.getElement('settingsBtn').addEventListener('click', () => {
+      this.openSettings();
+    });
+
     // Search functionality
-    const searchInput = document.getElementById('chatSearch');
+    const searchInput = this.uiManager.getElement('chatSearch');
     searchInput.addEventListener('input', (e) => {
       this.searchChats(e.target.value);
     });
@@ -152,14 +174,13 @@ class ChatManager {
       }
     });
 
-
     // Message input
-    const messageInput = document.getElementById('messageInput');
-    const sendButton = document.getElementById('sendButton');
+    const messageInput = this.uiManager.getElement('messageInput');
+    const sendButton = this.uiManager.getElement('sendButton');
 
     messageInput.addEventListener('input', () => {
-      this.adjustTextareaHeight();
-      this.updateSendButton();
+      this.uiManager.adjustTextareaHeight();
+      this.uiManager.updateSendButton();
     });
 
     messageInput.addEventListener('keydown', (e) => {
@@ -174,6 +195,11 @@ class ChatManager {
     });
   }
 
+  /**
+   * Create the first chat when no chats exist
+   * Sets up a new empty chat and makes it active
+   * Used during initial app load when storage is empty
+   */
   createInitialChat() {
     // Only create initial chat if none exist
     const newChatId = this.nextChatId++;
@@ -186,11 +212,16 @@ class ChatManager {
     
     this.chats.set(newChatId, newChat);
     this.loadChat(newChatId);
-    this.updateChatHistoryDisplay();
-    this.saveToStorage();
-    this.focusInput();
+    this.uiManager.updateChatHistoryDisplay(this.chats, this.currentChatId);
+    this.storageManager.debouncedSave(this.chats, this.nextChatId, this.currentChatId);
+    this.uiManager.focusInput();
   }
 
+  /**
+   * Find an existing chat with no messages
+   * Prevents creating duplicate empty chats
+   * @returns {number|null} Chat ID of empty chat, or null if none found
+   */
   findEmptyChat() {
     for (const [chatId, chat] of this.chats) {
       if (chat.messages.length === 0) {
@@ -200,18 +231,23 @@ class ChatManager {
     return null;
   }
 
+  /**
+   * Create new chat or switch to existing empty chat
+   * Optimizes chat creation by reusing empty chats when possible
+   * Triggered by "New Chat" button in sidebar
+   */
   createNewChat() {
     // Check if there's already an empty chat - if so, just switch to it or do nothing
     const emptyChatId = this.findEmptyChat();
     if (emptyChatId) {
       // If we're already on the empty chat, just focus input
       if (this.currentChatId === emptyChatId) {
-        this.focusInput();
+        this.uiManager.focusInput();
         return;
       }
       // Otherwise switch to the empty chat
       this.loadChat(emptyChatId);
-      this.focusInput();
+      this.uiManager.focusInput();
       return;
     }
     
@@ -226,11 +262,16 @@ class ChatManager {
     
     this.chats.set(newChatId, newChat);
     this.loadChat(newChatId);
-    this.updateChatHistoryDisplay();
-    this.saveToStorage();
-    this.focusInput();
+    this.uiManager.updateChatHistoryDisplay(this.chats, this.currentChatId);
+    this.storageManager.debouncedSave(this.chats, this.nextChatId, this.currentChatId);
+    this.uiManager.focusInput();
   }
 
+  /**
+   * Create new chat with pre-filled text from context menu
+   * Optimizes by reusing empty chats and sets appropriate title from source URL
+   * Used when user selects "New Chat" from context menu with selected text
+   */
   createNewChatWithText() {
     // Check if there's an empty chat first
     const emptyChatId = this.findEmptyChat();
@@ -243,7 +284,7 @@ class ChatManager {
       }
       this.loadChat(emptyChatId);
       this.preFillInput(false); // Just text, source is in header now
-      this.saveToStorage(); // Save the title change
+      this.storageManager.debouncedSave(this.chats, this.nextChatId, this.currentChatId); // Save the title change
       return;
     }
     
@@ -266,13 +307,18 @@ class ChatManager {
     
     this.chats.set(newChatId, newChat);
     this.loadChat(newChatId);
-    this.updateChatHistoryDisplay();
-    this.saveToStorage();
+    this.uiManager.updateChatHistoryDisplay(this.chats, this.currentChatId);
+    this.storageManager.debouncedSave(this.chats, this.nextChatId, this.currentChatId);
     
     // Pre-fill the input with just the selected text (source is in header now)
     this.preFillInput(false);
   }
 
+  /**
+   * Display chat selection interface for context menu text
+   * Allows users to choose existing chat or create new one
+   * Used when multiple chats exist and user selects text from web page
+   */
   showChatSelector() {
     // If no existing chats, create new one
     if (this.chats.size === 0) {
@@ -285,59 +331,46 @@ class ChatManager {
   }
 
   displayChatSelector() {
-    const messagesContainer = document.getElementById('messagesContainer');
-    const sortedChats = Array.from(this.chats.values()).sort((a, b) => {
-      const aTime = new Date(a.lastActivity || 0);
-      const bTime = new Date(b.lastActivity || 0);
-      return bTime - aTime;
-    });
-
-    const chatListHtml = sortedChats.map(chat => `
-      <div class="chat-selector-item" data-chat-id="${chat.id}">
-        <div class="chat-selector-title">${chat.title}</div>
-        <div class="chat-selector-preview">${this.getLastMessagePreview(chat)}</div>
-      </div>
-    `).join('');
-
-    messagesContainer.innerHTML = `
-      <div class="chat-selector">
-        <div class="chat-selector-header">
-          <h2>Continue in existing chat</h2>
-          <p>Selected text will be added to the chosen chat</p>
-          <div class="selected-text-preview">
-            <strong>Selected text:</strong>
-            <div class="text-preview">${this.sanitizeInput(this.pendingText)}</div>
-          </div>
-        </div>
-        <div class="chat-selector-list">
-          ${chatListHtml}
-        </div>
-        <div class="chat-selector-actions">
-          <button class="btn-secondary" id="createNewChatBtn">Create New Chat Instead</button>
-        </div>
-      </div>
-    `;
+    const elements = this.uiManager.displayChatSelector(this.chats, this.pendingText);
 
     // Add event listeners for chat selection
-    document.querySelectorAll('.chat-selector-item').forEach(item => {
+    elements.selectorItems.forEach(item => {
       item.addEventListener('click', () => {
         const chatId = parseInt(item.dataset.chatId);
         this.continueExistingChat(chatId);
       });
     });
 
-    document.getElementById('createNewChatBtn').addEventListener('click', () => {
+    elements.createNewBtn.addEventListener('click', () => {
       this.createNewChatWithText();
     });
   }
 
   continueExistingChat(chatId) {
+    // Update the last known source URL if we have one
+    if (this.pendingSource) {
+      const chat = this.chats.get(chatId);
+      if (chat) {
+        chat.lastSourceUrl = this.pendingSource;
+        chat.lastActivity = new Date().toISOString();
+      }
+    }
+    
     this.loadChat(chatId);
     this.preFillInput(false); // Don't include source for existing chats
   }
 
   continueChatFromContext() {
     if (this.targetChatId && this.chats.has(this.targetChatId)) {
+      // Update the last known source URL if we have one
+      if (this.pendingSource) {
+        const chat = this.chats.get(this.targetChatId);
+        if (chat) {
+          chat.lastSourceUrl = this.pendingSource;
+          chat.lastActivity = new Date().toISOString();
+        }
+      }
+      
       this.loadChat(this.targetChatId);
       this.preFillInput(false); // Don't include source for existing chats
     } else {
@@ -346,20 +379,18 @@ class ChatManager {
     }
   }
 
+  /**
+   * Pre-fill input with pending text from context menu
+   * Shows text as quote block instead of direct input for better UX
+   * Clears pending state after processing
+   * @param {boolean} includeSource - Whether to include source URL (deprecated)
+   */
   preFillInput(includeSource = false) {
     if (this.pendingText) {
-      const messageInput = document.getElementById('messageInput');
-      let textToInsert = this.pendingText;
-      
-      // Only include source if specifically requested (for new chats)
-      if (includeSource && this.pendingSource) {
-        textToInsert += `\n\nSource: ${this.pendingSource}`;
-      }
-      
-      messageInput.value = textToInsert;
-      this.adjustTextareaHeight();
-      this.updateSendButton();
-      this.focusInput();
+      // Show quote block in input instead of pre-filling text
+      this.uiManager.showInputQuote(this.pendingText, this.pendingSource);
+      this.uiManager.focusInput();
+      this.uiManager.updateSendButton();
       
       // Clear the pending text after using it
       this.pendingText = null;
@@ -367,63 +398,84 @@ class ChatManager {
     }
   }
 
+  /**
+   * Load and display specific chat by ID
+   * Updates all UI components and saves current state
+   * @param {number} chatId - ID of chat to load and display
+   */
   loadChat(chatId) {
     this.currentChatId = chatId;
-    this.updateChatHistoryDisplay();
-    this.renderMessages();
+    this.uiManager.updateChatHistoryDisplay(this.chats, this.currentChatId);
+    this.uiManager.renderMessages(this.chats.get(this.currentChatId));
     this.updateChatHeader();
-    this.clearInput();
-    this.saveToStorage();
+    this.uiManager.clearInput();
+    this.storageManager.debouncedSave(this.chats, this.nextChatId, this.currentChatId);
   }
 
-  updateChatHistoryDisplay(filteredChats = null) {
-    const chatHistory = document.getElementById('chatHistory');
+  /**
+   * Update chat header with source link and editable title
+   * Sets up event listeners for source link clicks and title editing
+   * Only shows header for chats with source URLs
+   */
+  updateChatHeader() {
+    const currentChat = this.chats.get(this.currentChatId);
+    const headerElements = this.uiManager.updateChatHeader(currentChat);
     
-    // Use filtered chats if provided, otherwise use all chats
-    const chatsToDisplay = filteredChats || Array.from(this.chats.values());
-    
-    // Sort chats by last activity (most recent first)
-    const sortedChats = chatsToDisplay.sort((a, b) => {
-      const aTime = new Date(a.lastActivity || 0);
-      const bTime = new Date(b.lastActivity || 0);
-      return bTime - aTime;
-    });
-    
-    if (sortedChats.length === 0) {
-      chatHistory.innerHTML = '<div class="no-results">No chats found</div>';
-      return;
+    // Add click handler if header elements exist
+    if (headerElements) {
+      if (headerElements.sourceLink) {
+        headerElements.sourceLink.addEventListener('click', (e) => {
+          e.preventDefault();
+          const url = headerElements.sourceLink.dataset.url;
+          this.openOrFocusUrl(url);
+        });
+      }
+      
+      if (headerElements.titleInput) {
+        // Add title editing functionality
+        headerElements.titleInput.addEventListener('blur', () => {
+          this.updateChatTitle(headerElements.titleInput.value);
+        });
+        
+        headerElements.titleInput.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            headerElements.titleInput.blur();
+          }
+          if (e.key === 'Escape') {
+            headerElements.titleInput.value = currentChat.title;
+            headerElements.titleInput.blur();
+          }
+        });
+      }
     }
-    
-    const chatItemsHtml = sortedChats.map(chat => `
-      <div class="chat-item ${chat.id === this.currentChatId ? 'active' : ''}" data-chat-id="${chat.id}">
-        <div class="chat-content">
-          <div class="chat-title" data-chat-id="${chat.id}">${chat.title}</div>
-          <div class="chat-preview">${this.getLastMessagePreview(chat)}</div>
-        </div>
-        <div class="chat-actions">
-          <button class="chat-action-btn rename-btn" data-chat-id="${chat.id}" title="Rename chat">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-              <path d="m18.5 2.5 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-            </svg>
-          </button>
-          <button class="chat-action-btn delete-btn" data-chat-id="${chat.id}" title="Delete chat">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <polyline points="3,6 5,6 21,6"/>
-              <path d="m19,6v14a2,2 0 0,1 -2,2H7a2,2 0 0,1 -2,-2V6m3,0V4a2,2 0 0,1 2,-2h4a2,2 0 0,1 2,2v2"/>
-            </svg>
-          </button>
-        </div>
-      </div>
-    `).join('');
-    
-    chatHistory.innerHTML = chatItemsHtml;
   }
 
+  /**
+   * Update chat title and persist changes
+   * Validates title is different and non-empty before saving
+   * @param {string} newTitle - New title for the current chat
+   */
+  updateChatTitle(newTitle) {
+    const currentChat = this.chats.get(this.currentChatId);
+    if (currentChat && newTitle.trim() && newTitle.trim() !== currentChat.title) {
+      currentChat.title = newTitle.trim();
+      currentChat.lastActivity = new Date().toISOString();
+      this.uiManager.updateChatHistoryDisplay(this.chats, this.currentChatId);
+      this.storageManager.debouncedSave(this.chats, this.nextChatId, this.currentChatId);
+    }
+  }
+
+  /**
+   * Search through chat titles and message content
+   * Filters chat history display based on search query
+   * Searches both chat titles and all message content for matches
+   * @param {string} query - Search term to filter chats by
+   */
   searchChats(query) {
     if (!query.trim()) {
       // Show all chats if query is empty
-      this.updateChatHistoryDisplay();
+      this.uiManager.updateChatHistoryDisplay(this.chats, this.currentChatId);
       return;
     }
     
@@ -440,61 +492,17 @@ class ChatManager {
       );
     });
     
-    this.updateChatHistoryDisplay(filteredChats);
+    this.uiManager.updateChatHistoryDisplay(this.chats, this.currentChatId, filteredChats);
   }
 
-  getLastMessagePreview(chat) {
-    if (chat.messages.length === 0) {
-      return 'No messages yet';
-    }
-    
-    const lastMessage = chat.messages[chat.messages.length - 1];
-    const preview = lastMessage.content.length > 50 
-      ? lastMessage.content.substring(0, 50) + '...' 
-      : lastMessage.content;
-    
-    return preview;
-  }
-
-  renderMessages() {
-    const messagesContainer = document.getElementById('messagesContainer');
-    const currentChat = this.chats.get(this.currentChatId);
-    
-    if (!currentChat || currentChat.messages.length === 0) {
-      messagesContainer.innerHTML = `
-        <div class="welcome-message">
-          <div class="welcome-icon">💬</div>
-          <h2>Start a new conversation</h2>
-          <p>Type your message below to begin chatting.</p>
-        </div>
-      `;
-      return;
-    }
-
-    const messagesHtml = currentChat.messages.map(message => `
-      <div class="message ${message.type}">
-        <div class="message-avatar">
-          ${message.type === 'user' ? 'U' : 'AI'}
-        </div>
-        <div class="message-content">
-          ${this.formatMessage(message.content)}
-        </div>
-      </div>
-    `).join('');
-
-    messagesContainer.innerHTML = messagesHtml;
-    this.scrollToBottom();
-  }
-
-  formatMessage(content) {
-    // Sanitize and format message content
-    const sanitized = this.sanitizeInput(content);
-    return sanitized.replace(/\n/g, '<br>');
-  }
-
+  /**
+   * Send user message and trigger AI response
+   * Handles quote formatting, auto-title generation, and message persistence
+   * Clears input after sending and initiates AI response flow
+   */
   sendMessage() {
-    const messageInput = document.getElementById('messageInput');
-    const content = messageInput.value.trim();
+    // Get formatted content (includes quote if present)
+    const content = this.uiManager.getFormattedMessageWithQuote();
     
     if (!content) return;
 
@@ -514,118 +522,118 @@ class ChatManager {
 
     // Update chat title if it's a new chat (but not if it already has a meaningful title from context menu)
     if (currentChat.title === 'New Chat' && content.length > 0) {
-      currentChat.title = content.length > 30 ? content.substring(0, 30) + '...' : content;
+      // Extract first non-quoted text for title (no source URL in content now)
+      let titleText = content;
+      const quoteMatch = content.match(/^"(.+?)"\n\n(.+)?$/s);
+      if (quoteMatch && quoteMatch[2]) {
+        titleText = quoteMatch[2];
+      } else if (quoteMatch) {
+        titleText = quoteMatch[1];
+      }
+      
+      currentChat.title = titleText.length > 30 ? titleText.substring(0, 30) + '...' : titleText;
     }
 
-    // Clear input
-    messageInput.value = '';
-    this.adjustTextareaHeight();
-    this.updateSendButton();
+    // Clear input and quote
+    this.uiManager.clearInput();
+    this.uiManager.hideInputQuote();
 
     // Update displays and save
-    this.updateChatHistoryDisplay();
-    this.renderMessages();
-    this.saveToStorage();
+    this.uiManager.updateChatHistoryDisplay(this.chats, this.currentChatId);
+    this.uiManager.renderMessages(currentChat);
+    this.storageManager.debouncedSave(this.chats, this.nextChatId, this.currentChatId);
 
-    // Simulate AI response (in a real app, this would call an API)
-    setTimeout(() => {
-      this.simulateAIResponse(content);
-    }, 800);
+    // Get AI response from OpenAI
+    this.getAIResponse(content);
   }
 
-  simulateAIResponse(userMessage) {
+  /**
+   * Get AI response from OpenAI Assistant
+   * Handles API key validation, loading states, and error handling
+   * Updates chat with loading message, then replaces with actual response
+   * @param {string} userMessage - User's message to send to AI
+   */
+  async getAIResponse(userMessage) {
     const currentChat = this.chats.get(this.currentChatId);
     if (!currentChat) return;
 
-    // Sanitize user input to prevent any potential XSS
-    const sanitizedMessage = this.sanitizeInput(userMessage);
-    
-    // Simple response simulation - in a real app, this would be an API call
-    let response = "I understand you'd like me to help with analyzing information. ";
-    
-    const lowerMessage = sanitizedMessage.toLowerCase();
-    
-    if (lowerMessage.includes('fact-check') || lowerMessage.includes('verify')) {
-      response += "To properly fact-check this claim, I would need to:\n\n1. Examine the original sources\n2. Cross-reference with reliable databases\n3. Check for any contradicting evidence\n4. Assess the credibility of the information source\n\nCould you please share the specific claim or content you'd like me to analyze?";
-    } else if (lowerMessage.includes('source') || lowerMessage.includes('credibility')) {
-      response += "When evaluating source credibility, I look at several factors:\n\n• Author expertise and credentials\n• Publication reputation and editorial standards\n• Transparency in methodology\n• Presence of citations and references\n• Potential conflicts of interest\n\nPlease share the source you'd like me to evaluate.";
-    } else if (lowerMessage.includes('news') || lowerMessage.includes('article')) {
-      response += "For news article verification, I can help you:\n\n• Check if the story is reported by multiple reliable sources\n• Verify quotes and statistics\n• Identify potential bias or misleading framing\n• Assess the timeliness and relevance of the information\n\nPlease share the article link or content for analysis.";
-    } else {
-      response += "I can help you with various aspects of information verification:\n\n• Fact-checking specific claims\n• Analyzing source credibility\n• Identifying potential misinformation patterns\n• Providing research guidance\n\nWhat specific information would you like me to help analyze?";
+    // Check if API key is configured
+    const apiKey = await this.storageManager.getOpenAIApiKey();
+    if (!apiKey) {
+      const errorMessage = {
+        id: Date.now(),
+        type: 'assistant',
+        content: 'OpenAI API key not configured. Please click the settings icon (⚙️) in the top-right corner to configure your API key.',
+        isError: true,
+        timestamp: new Date().toISOString()
+      };
+
+      currentChat.messages.push(errorMessage);
+      currentChat.lastActivity = new Date().toISOString();
+      this.uiManager.updateChatHistoryDisplay(this.chats, this.currentChatId);
+      this.uiManager.renderMessages(currentChat);
+      this.storageManager.debouncedSave(this.chats, this.nextChatId, this.currentChatId);
+      return;
     }
 
-    const aiMessage = {
-      id: Date.now(),
+    // Add loading message
+    const loadingMessage = {
+      id: `loading-${Date.now()}`,
       type: 'assistant',
-      content: response,
+      content: 'Analyzing your message...',
+      isLoading: true,
       timestamp: new Date().toISOString()
     };
 
-    currentChat.messages.push(aiMessage);
-    currentChat.lastActivity = new Date().toISOString();
-    
-    this.updateChatHistoryDisplay();
-    this.renderMessages();
-    this.saveToStorage();
-  }
+    currentChat.messages.push(loadingMessage);
+    this.uiManager.renderMessages(currentChat);
 
-  // Sanitize input to prevent XSS attacks
-  sanitizeInput(input) {
-    const div = document.createElement('div');
-    div.textContent = input;
-    return div.innerHTML;
-  }
-
-
-  adjustTextareaHeight() {
-    const textarea = document.getElementById('messageInput');
-    textarea.style.height = 'auto';
-    textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px';
-  }
-
-  updateSendButton() {
-    const messageInput = document.getElementById('messageInput');
-    const sendButton = document.getElementById('sendButton');
-    sendButton.disabled = !messageInput.value.trim();
-  }
-
-  updateChatHeader() {
-    const currentChat = this.chats.get(this.currentChatId);
-    const chatHeader = document.getElementById('chatHeader');
-    const chatSourceTitle = document.getElementById('chatSourceTitle');
-    
-    if (currentChat && currentChat.sourceUrl && currentChat.title !== 'New Chat') {
-      // Show header with clickable full URL
-      chatSourceTitle.innerHTML = `<a href="#" class="source-link" data-url="${currentChat.sourceUrl}">${currentChat.sourceUrl}</a>`;
-      chatHeader.style.display = 'block';
+    try {
+      // Get response from OpenAI
+      const response = await this.openaiClient.sendMessage(userMessage);
       
-      // Add click handler to focus existing tab or open new one
-      const sourceLink = chatSourceTitle.querySelector('.source-link');
-      sourceLink.addEventListener('click', (e) => {
-        e.preventDefault();
-        this.openOrFocusUrl(currentChat.sourceUrl);
-      });
-    } else {
-      // Hide header for regular chats
-      chatHeader.style.display = 'none';
+      // Remove loading message
+      const loadingIndex = currentChat.messages.findIndex(msg => msg.id === loadingMessage.id);
+      if (loadingIndex !== -1) {
+        currentChat.messages.splice(loadingIndex, 1);
+      }
+
+      // Add AI response
+      const aiMessage = {
+        id: Date.now(),
+        type: 'assistant',
+        content: response,
+        timestamp: new Date().toISOString()
+      };
+
+      currentChat.messages.push(aiMessage);
+      currentChat.lastActivity = new Date().toISOString();
+      
+    } catch (error) {
+      console.error('Error getting AI response:', error);
+      
+      // Remove loading message
+      const loadingIndex = currentChat.messages.findIndex(msg => msg.id === loadingMessage.id);
+      if (loadingIndex !== -1) {
+        currentChat.messages.splice(loadingIndex, 1);
+      }
+
+      // Add error message
+      const errorMessage = {
+        id: Date.now(),
+        type: 'assistant',
+        content: `Sorry, I encountered an error: ${error.message}\n\nPlease make sure your OpenAI API key is configured in Settings and try again.`,
+        isError: true,
+        timestamp: new Date().toISOString()
+      };
+
+      currentChat.messages.push(errorMessage);
+      currentChat.lastActivity = new Date().toISOString();
     }
-  }
-
-  scrollToBottom() {
-    const messagesContainer = document.getElementById('messagesContainer');
-    messagesContainer.scrollTop = messagesContainer.scrollHeight;
-  }
-
-  focusInput() {
-    document.getElementById('messageInput').focus();
-  }
-
-  clearInput() {
-    const messageInput = document.getElementById('messageInput');
-    messageInput.value = '';
-    this.adjustTextareaHeight();
-    this.updateSendButton();
+    
+    this.uiManager.updateChatHistoryDisplay(this.chats, this.currentChatId);
+    this.uiManager.renderMessages(currentChat);
+    this.storageManager.debouncedSave(this.chats, this.nextChatId, this.currentChatId);
   }
 
   renameChat(chatId) {
@@ -635,8 +643,8 @@ class ChatManager {
     const newTitle = prompt('Enter new chat name:', chat.title);
     if (newTitle && newTitle.trim() && newTitle.trim() !== chat.title) {
       chat.title = newTitle.trim();
-      this.updateChatHistoryDisplay();
-      this.saveToStorage();
+      this.uiManager.updateChatHistoryDisplay(this.chats, this.currentChatId);
+      this.storageManager.forceSave(this.chats, this.nextChatId, this.currentChatId);
     }
   }
 
@@ -657,95 +665,9 @@ class ChatManager {
         }
       }
       
-      this.updateChatHistoryDisplay();
-      this.saveToStorage();
+      this.uiManager.updateChatHistoryDisplay(this.chats, this.currentChatId);
+      this.storageManager.forceSave(this.chats, this.nextChatId, this.currentChatId);
     }
-  }
-
-  // Simple encryption using Web Crypto API for sensitive chat data
-  async encryptData(data) {
-    try {
-      const key = await this.getOrCreateEncryptionKey();
-      const encoder = new TextEncoder();
-      const dataString = JSON.stringify(data);
-      const dataBuffer = encoder.encode(dataString);
-      
-      const iv = crypto.getRandomValues(new Uint8Array(12));
-      const encryptedBuffer = await crypto.subtle.encrypt(
-        { name: 'AES-GCM', iv: iv },
-        key,
-        dataBuffer
-      );
-      
-      // Combine IV and encrypted data
-      const result = new Uint8Array(iv.length + encryptedBuffer.byteLength);
-      result.set(iv);
-      result.set(new Uint8Array(encryptedBuffer), iv.length);
-      
-      return Array.from(result);
-    } catch (error) {
-      console.error('Encryption failed:', error);
-      // Fallback to unencrypted storage if encryption fails
-      return JSON.stringify(data);
-    }
-  }
-
-  async decryptData(encryptedArray) {
-    try {
-      const key = await this.getOrCreateEncryptionKey();
-      
-      // Handle both encrypted array and fallback string formats
-      if (typeof encryptedArray === 'string') {
-        return JSON.parse(encryptedArray);
-      }
-      
-      const encryptedData = new Uint8Array(encryptedArray);
-      const iv = encryptedData.slice(0, 12);
-      const data = encryptedData.slice(12);
-      
-      const decryptedBuffer = await crypto.subtle.decrypt(
-        { name: 'AES-GCM', iv: iv },
-        key,
-        data
-      );
-      
-      const decoder = new TextDecoder();
-      const decryptedString = decoder.decode(decryptedBuffer);
-      return JSON.parse(decryptedString);
-    } catch (error) {
-      console.error('Decryption failed:', error);
-      throw error;
-    }
-  }
-
-  async getOrCreateEncryptionKey() {
-    // Check if key already exists in storage
-    const result = await chrome.storage.local.get(['encryptionKey']);
-    
-    if (result.encryptionKey) {
-      return await crypto.subtle.importKey(
-        'raw',
-        new Uint8Array(result.encryptionKey),
-        { name: 'AES-GCM' },
-        false,
-        ['encrypt', 'decrypt']
-      );
-    }
-    
-    // Generate new key if none exists
-    const key = await crypto.subtle.generateKey(
-      { name: 'AES-GCM', length: 256 },
-      true,
-      ['encrypt', 'decrypt']
-    );
-    
-    // Export and store the key
-    const exportedKey = await crypto.subtle.exportKey('raw', key);
-    await chrome.storage.local.set({
-      encryptionKey: Array.from(new Uint8Array(exportedKey))
-    });
-    
-    return key;
   }
 
   extractDomainFromUrl(url) {
@@ -771,15 +693,116 @@ class ChatManager {
     }
   }
 
-  // Sanitize input to prevent XSS attacks
-  sanitizeInput(input) {
-    const div = document.createElement('div');
-    div.textContent = input;
-    return div.innerHTML;
+  // Settings functionality
+  async openSettings() {
+    this.uiManager.openSettingsModal();
+    const apiKeyInput = this.uiManager.getElement('apiKeyInput');
+    
+    // Load existing API key if available
+    try {
+      const decryptedKey = await this.storageManager.getOpenAIApiKey();
+      if (decryptedKey) {
+        apiKeyInput.value = decryptedKey;
+      }
+    } catch (error) {
+      console.error('Error loading API key:', error);
+    }
+    
+    // Settings modal event listeners
+    this.setupSettingsEventListeners();
+  }
+
+  setupSettingsEventListeners() {
+    const closeBtn = this.uiManager.getElement('closeSettings');
+    const saveBtn = this.uiManager.getElement('saveSettings');
+    const testBtn = this.uiManager.getElement('testConnection');
+    const toggleBtn = this.uiManager.getElement('toggleApiKey');
+    const apiKeyInput = this.uiManager.getElement('apiKeyInput');
+    const modal = this.uiManager.getElement('settingsModal');
+
+    // Close modal handlers
+    const closeModal = () => {
+      this.uiManager.closeSettingsModal();
+    };
+
+    closeBtn.onclick = closeModal;
+    modal.onclick = (e) => {
+      if (e.target === modal) closeModal();
+    };
+
+    // Toggle API key visibility
+    toggleBtn.onclick = () => {
+      const isPassword = apiKeyInput.type === 'password';
+      apiKeyInput.type = isPassword ? 'text' : 'password';
+      toggleBtn.textContent = isPassword ? '🙈' : '👁️';
+    };
+
+    // Save settings
+    saveBtn.onclick = async () => {
+      const apiKey = apiKeyInput.value.trim();
+      if (!apiKey) {
+        this.uiManager.showSettingsStatus('Please enter an API key', 'error');
+        return;
+      }
+      
+      if (!apiKey.startsWith('sk-')) {
+        this.uiManager.showSettingsStatus('Invalid API key format. OpenAI keys start with "sk-"', 'error');
+        return;
+      }
+
+      try {
+        saveBtn.disabled = true;
+        this.uiManager.showSettingsStatus('Saving...', 'loading');
+        
+        await this.storageManager.saveOpenAIApiKey(apiKey);
+        this.uiManager.showSettingsStatus('Settings saved successfully!', 'success');
+        
+        setTimeout(() => {
+          closeModal();
+        }, 1500);
+      } catch (error) {
+        console.error('Error saving settings:', error);
+        this.uiManager.showSettingsStatus('Error saving settings. Please try again.', 'error');
+      } finally {
+        saveBtn.disabled = false;
+      }
+    };
+
+    // Test connection
+    testBtn.onclick = async () => {
+      const apiKey = apiKeyInput.value.trim();
+      if (!apiKey) {
+        this.uiManager.showSettingsStatus('Please enter an API key first', 'error');
+        return;
+      }
+
+      try {
+        testBtn.disabled = true;
+        this.uiManager.showSettingsStatus('Testing connection...', 'loading');
+        
+        const success = await this.openaiClient.testConnection(apiKey);
+        if (success) {
+          this.uiManager.showSettingsStatus('Connection successful!', 'success');
+        } else {
+          this.uiManager.showSettingsStatus('Connection failed. Please check your API key.', 'error');
+        }
+      } catch (error) {
+        console.error('Error testing connection:', error);
+        this.uiManager.showSettingsStatus('Connection test failed. Please check your API key.', 'error');
+      } finally {
+        testBtn.disabled = false;
+      }
+    };
   }
 }
 
 // Initialize the chat manager when the page loads
 document.addEventListener('DOMContentLoaded', () => {
-  new ChatManager();
+  console.log('ChatManager initializing with modular architecture...');
+  const manager = new ChatManager();
+  console.log('ChatManager initialized:', manager);
+  
+  // Debug: Check if settings button exists
+  const settingsBtn = document.getElementById('settingsBtn');
+  console.log('Settings button found:', settingsBtn);
 });

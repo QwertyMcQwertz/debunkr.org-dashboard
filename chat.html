@@ -15,6 +15,12 @@
           <span class="logo-icon">MI</span>
           <span class="logo-text">MisInfo Manager</span>
         </div>
+        <button class="settings-btn" id="settingsBtn" title="Settings">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+            <path d="M12 15a3 3 0 100-6 3 3 0 000 6z" stroke="currentColor" stroke-width="2"/>
+            <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82v.79a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z" stroke="currentColor" stroke-width="2"/>
+          </svg>
+        </button>
         <button class="new-chat-btn" id="newChatBtn">
           <span class="plus-icon">+</span>
           New Chat
@@ -34,6 +40,9 @@
     <!-- Main Chat Area -->
     <div class="main-content">
       <div class="chat-header" id="chatHeader" style="display: none;">
+        <div class="chat-title-container">
+          <input type="text" class="chat-title-editable" id="chatTitleEditable" placeholder="Chat Title">
+        </div>
         <div class="chat-source-title" id="chatSourceTitle"></div>
       </div>
       
@@ -46,6 +55,7 @@
       </div>
       
       <div class="input-container">
+        <div id="inputQuoteContainer" style="display: none;"></div>
         <div class="input-wrapper">
           <textarea 
             id="messageInput" 
@@ -61,7 +71,37 @@
       </div>
     </div>
   </div>
+
+  <!-- Settings Modal -->
+  <div class="modal-overlay" id="settingsModal" style="display: none;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Settings</h3>
+        <button class="modal-close" id="closeSettings">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="setting-group">
+          <label for="apiKeyInput">OpenAI API Key</label>
+          <div class="api-key-container">
+            <input type="password" id="apiKeyInput" placeholder="sk-..." class="api-key-input">
+            <button type="button" id="toggleApiKey" class="toggle-key-btn" title="Show/Hide API Key">👁️</button>
+          </div>
+          <div class="setting-help">
+            <small>Your API key is encrypted and stored locally. Get your key from <a href="https://platform.openai.com/api-keys" target="_blank">OpenAI Platform</a>.</small>
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button id="saveSettings" class="save-btn">Save Settings</button>
+          <button id="testConnection" class="test-btn">Test Connection</button>
+        </div>
+        <div id="settingsStatus" class="settings-status"></div>
+      </div>
+    </div>
+  </div>
   
+  <script src="storage-manager.js"></script>
+  <script src="openai-client.js"></script>
+  <script src="ui-manager.js"></script>
   <script src="chat.js"></script>
 </body>
 </html>

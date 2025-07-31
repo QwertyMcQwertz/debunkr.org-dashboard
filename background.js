@@ -61,34 +61,41 @@ async function openOrFocusChatTab(urlParams = '') {
 
 // Set up context menus
 async function setupContextMenus() {
-  // Remove existing menus
-  await chrome.contextMenus.removeAll();
-  
-  // Create parent menu
-  chrome.contextMenus.create({
-    id: 'misinfoManager',
-    title: 'MisInfo Manager',
-    contexts: ['selection']
-  });
-  
-  // Create "New Chat" submenu
-  chrome.contextMenus.create({
-    id: 'newChat',
-    parentId: 'misinfoManager',
-    title: 'New Chat',
-    contexts: ['selection']
-  });
-  
-  // Add separator
-  chrome.contextMenus.create({
-    id: 'separator',
-    parentId: 'misinfoManager',
-    type: 'separator',
-    contexts: ['selection']
-  });
-  
-  // Load existing chats and add them to context menu
-  await updateContextMenuWithChats();
+  try {
+    // Remove existing menus
+    await chrome.contextMenus.removeAll();
+    
+    // Small delay to ensure cleanup completes
+    await new Promise(resolve => setTimeout(resolve, 100));
+    
+    // Create parent menu
+    chrome.contextMenus.create({
+      id: 'misinfoManager',
+      title: 'MisInfo Manager',
+      contexts: ['selection']
+    });
+    
+    // Create "New Chat" submenu
+    chrome.contextMenus.create({
+      id: 'newChat',
+      parentId: 'misinfoManager',
+      title: 'New Chat',
+      contexts: ['selection']
+    });
+    
+    // Add separator
+    chrome.contextMenus.create({
+      id: 'separator',
+      parentId: 'misinfoManager',
+      type: 'separator',
+      contexts: ['selection']
+    });
+    
+    // Load existing chats and add them to context menu
+    await updateContextMenuWithChats();
+  } catch (error) {
+    console.error('Error setting up context menus:', error);
+  }
 }
 
 // Update context menu with existing chats
@@ -110,12 +117,16 @@ async function updateContextMenuWithChats() {
         // Add each chat as a menu item
         sortedChats.forEach(([chatId, chat]) => {
           console.log('Creating context menu item for chat:', chatId, chat.title);
-          chrome.contextMenus.create({
-            id: `chat-${chatId}`,
-            parentId: 'misinfoManager',
-            title: chat.title.length > 30 ? chat.title.substring(0, 30) + '...' : chat.title,
-            contexts: ['selection']
-          });
+          try {
+            chrome.contextMenus.create({
+              id: `chat-${chatId}`,
+              parentId: 'misinfoManager',
+              title: chat.title.length > 30 ? chat.title.substring(0, 30) + '...' : chat.title,
+              contexts: ['selection']
+            });
+          } catch (error) {
+            console.error(`Error creating context menu item for chat ${chatId}:`, error);
+          }
         });
       }
     } else {
@@ -147,9 +158,20 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
   }
 });
 
+// Debounce context menu updates
+let contextMenuUpdateTimeout;
+
 // Listen for storage changes to update context menu
 chrome.storage.onChanged.addListener((changes, namespace) => {
   if (namespace === 'local' && (changes.chatTitles || changes.encryptedChats)) {
-    setupContextMenus(); // Rebuild entire context menu
+    // Clear existing timeout
+    if (contextMenuUpdateTimeout) {
+      clearTimeout(contextMenuUpdateTimeout);
+    }
+    
+    // Debounce context menu updates to prevent rapid rebuilds
+    contextMenuUpdateTimeout = setTimeout(() => {
+      setupContextMenus(); // Rebuild entire context menu
+    }, 500);
   }
 });
