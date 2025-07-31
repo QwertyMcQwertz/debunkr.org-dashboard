@@ -38,6 +38,7 @@ class OpenAIClient {
    */
   async testConnection(apiKey) {
     try {
+      console.log('Testing connection to OpenAI API...');
       const response = await fetch('https://api.openai.com/v1/models', {
         method: 'GET',
         headers: {
@@ -45,6 +46,14 @@ class OpenAIClient {
           'Content-Type': 'application/json'
         }
       });
+      
+      console.log('Response status:', response.status);
+      console.log('Response ok:', response.ok);
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.log('Error response:', errorText);
+      }
       
       return response.ok;
     } catch (error) {
