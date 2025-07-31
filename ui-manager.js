@@ -92,11 +92,49 @@ class UIManager {
     const messagesContainer = this.getElement('messagesContainer');
     
     if (!currentChat || currentChat.messages.length === 0) {
+      // Don't modify the container if it already has the welcome message
+      if (messagesContainer.querySelector('.welcome-message')) {
+        return;
+      }
+      // If no welcome message exists, create it (this shouldn't happen in normal flow)
       messagesContainer.innerHTML = `
         <div class="welcome-message">
-          <div class="welcome-icon">💬</div>
-          <h2>Start a new conversation</h2>
-          <p>Type your message below to begin chatting.</p>
+          <div class="welcome-icon">🛡️</div>
+          <h2>Fight Misinformation with AI</h2>
+          <p>Highlight suspicious text on any website, right-click, and let our egalitarian AI analyze it for bias, manipulation, and power structures.</p>
+          
+          <div class="welcome-features">
+            <div class="feature-item">
+              <span class="feature-icon">🎯</span>
+              <div class="feature-text">
+                <strong>Smart Analysis</strong>
+                <small>Questions power structures and identifies bias</small>
+              </div>
+            </div>
+            <div class="feature-item">
+              <span class="feature-icon">🔍</span>
+              <div class="feature-text">
+                <strong>Source Critical</strong>
+                <small>Examines who benefits from particular narratives</small>
+              </div>
+            </div>
+            <div class="feature-item">
+              <span class="feature-icon">💡</span>
+              <div class="feature-text">
+                <strong>Media Literacy</strong>
+                <small>Promotes critical thinking about information</small>
+              </div>
+            </div>
+          </div>
+          
+          <div class="get-started-cta">
+            <h3>Get Started:</h3>
+            <div class="step-list">
+              <div class="step">1. Configure your OpenAI API key in <span class="settings-hint">⚙️ Settings</span></div>
+              <div class="step">2. Highlight text on any webpage</div>
+              <div class="step">3. Right-click → "MisInfo Manager" → "New Chat"</div>
+            </div>
+          </div>
         </div>
       `;
       return;
@@ -248,6 +286,9 @@ class UIManager {
   updateChatHistoryDisplay(chats, currentChatId, filteredChats = null) {
     const chatHistory = this.getElement('chatHistory');
     
+    // Update stats when updating chat history
+    this.updateStats(chats);
+    
     // Use filtered chats if provided, otherwise use all chats
     const chatsToDisplay = filteredChats || Array.from(chats.values());
     
@@ -259,7 +300,12 @@ class UIManager {
     });
     
     if (sortedChats.length === 0) {
-      chatHistory.innerHTML = '<div class="no-results">No chats found</div>';
+      chatHistory.innerHTML = `
+        <div class="empty-history">
+          <div class="empty-history-text">No conversations yet</div>
+          <div class="empty-history-hint">Start by selecting text on any webpage!</div>
+        </div>
+      `;
       return;
     }
     
@@ -541,5 +587,53 @@ class UIManager {
     modal.style.display = 'none';
     status.className = 'settings-status';
     status.style.display = 'none';
+  }
+
+  /**
+   * Update the stats section with current usage numbers
+   * @param {Map} chats - Map of all chats
+   */
+  updateStats(chats) {
+    const totalChatsElement = this.getElement('totalChats');
+    const totalAnalysesElement = this.getElement('totalAnalyses');
+    
+    if (totalChatsElement && totalAnalysesElement) {
+      const totalChats = chats.size;
+      let totalAnalyses = 0;
+      
+      // Count total messages (analyses)
+      for (const chat of chats.values()) {
+        totalAnalyses += chat.messages.filter(msg => msg.type === 'user').length;
+      }
+      
+      // Animate the numbers
+      this.animateNumber(totalChatsElement, parseInt(totalChatsElement.textContent) || 0, totalChats);
+      this.animateNumber(totalAnalysesElement, parseInt(totalAnalysesElement.textContent) || 0, totalAnalyses);
+    }
+  }
+
+  /**
+   * Animate number changes for visual appeal
+   * @param {HTMLElement} element - Element to animate
+   * @param {number} from - Starting number
+   * @param {number} to - Ending number
+   */
+  animateNumber(element, from, to) {
+    if (from === to) return;
+    
+    const duration = 500;
+    const steps = Math.abs(to - from);
+    const increment = (to - from) / Math.min(steps, 20);
+    const stepDuration = duration / Math.min(steps, 20);
+    
+    let current = from;
+    const timer = setInterval(() => {
+      current += increment;
+      if ((increment > 0 && current >= to) || (increment < 0 && current <= to)) {
+        current = to;
+        clearInterval(timer);
+      }
+      element.textContent = Math.round(current);
+    }, stepDuration);
   }
 }

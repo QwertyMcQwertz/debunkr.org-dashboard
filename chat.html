@@ -12,8 +12,11 @@
     <div class="sidebar">
       <div class="sidebar-header">
         <div class="logo">
-          <span class="logo-icon">MI</span>
-          <span class="logo-text">MisInfo Manager</span>
+          <span class="logo-icon">🛡️</span>
+          <div class="logo-text-container">
+            <span class="logo-text">MisInfo Manager</span>
+            <span class="logo-tagline">Truth through AI</span>
+          </div>
         </div>
         <button class="settings-btn" id="settingsBtn" title="Settings">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
@@ -32,9 +35,27 @@
         </div>
       </div>
       
+      <div class="stats-section" id="statsSection">
+        <div class="stats-header">
+          <span class="stats-icon">📊</span>
+          <span class="stats-title">Your Impact</span>
+        </div>
+        <div class="stats-grid">
+          <div class="stat-item">
+            <div class="stat-number" id="totalAnalyses">0</div>
+            <div class="stat-label">Claims Analyzed</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-number" id="totalChats">0</div>
+            <div class="stat-label">Conversations</div>
+          </div>
+        </div>
+      </div>
+      
       <div class="chat-history" id="chatHistory">
         <!-- Chat items will be dynamically generated -->
       </div>
+      
     </div>
     
     <!-- Main Chat Area -->
@@ -48,9 +69,42 @@
       
       <div class="messages-container" id="messagesContainer">
         <div class="welcome-message">
-          <div class="welcome-icon">○</div>
-          <h2>Start a new conversation</h2>
-          <p>Type your message below to begin chatting.</p>
+          <div class="welcome-icon">🛡️</div>
+          <h2>Fight Misinformation with AI</h2>
+          <p>Highlight suspicious text on any website, right-click, and let our egalitarian AI analyze it for bias, manipulation, and power structures.</p>
+          
+          <div class="welcome-features">
+            <div class="feature-item">
+              <span class="feature-icon">🎯</span>
+              <div class="feature-text">
+                <strong>Smart Analysis</strong>
+                <small>Questions power structures and identifies bias</small>
+              </div>
+            </div>
+            <div class="feature-item">
+              <span class="feature-icon">🔍</span>
+              <div class="feature-text">
+                <strong>Source Critical</strong>
+                <small>Examines who benefits from particular narratives</small>
+              </div>
+            </div>
+            <div class="feature-item">
+              <span class="feature-icon">💡</span>
+              <div class="feature-text">
+                <strong>Media Literacy</strong>
+                <small>Promotes critical thinking about information</small>
+              </div>
+            </div>
+          </div>
+          
+          <div class="get-started-cta">
+            <h3>Get Started:</h3>
+            <div class="step-list">
+              <div class="step">1. Configure your OpenAI API key in <span class="settings-hint">⚙️ Settings</span></div>
+              <div class="step">2. Highlight text on any webpage</div>
+              <div class="step">3. Right-click → "MisInfo Manager" → "New Chat"</div>
+            </div>
+          </div>
         </div>
       </div>
       
