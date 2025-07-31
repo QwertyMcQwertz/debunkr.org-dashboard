@@ -825,33 +825,36 @@ class ChatManager {
 
     // Test connection
     if (testBtn) {
-      console.log('Setting up test button event listener');
       testBtn.onclick = async () => {
         console.log('Test connection button clicked');
         const apiKey = apiKeyInput.value.trim();
-        console.log('API key length:', apiKey.length);
+        
         if (!apiKey) {
           this.uiManager.showSettingsStatus('Please enter an API key first', 'error');
           return;
         }
 
-      try {
-        testBtn.disabled = true;
-        this.uiManager.showSettingsStatus('Testing connection...', 'loading');
-        
-        const success = await this.openaiClient.testConnection(apiKey);
-        if (success) {
-          this.uiManager.showSettingsStatus('Connection successful!', 'success');
-        } else {
-          this.uiManager.showSettingsStatus('Connection failed. Please check your API key.', 'error');
+        try {
+          testBtn.disabled = true;
+          this.uiManager.showSettingsStatus('Testing connection...', 'loading');
+          console.log('About to test connection with API key');
+          
+          const success = await this.openaiClient.testConnection(apiKey);
+          console.log('Test connection result:', success);
+          
+          if (success) {
+            this.uiManager.showSettingsStatus('Connection successful!', 'success');
+          } else {
+            this.uiManager.showSettingsStatus('Connection failed. Please check your API key.', 'error');
+          }
+        } catch (error) {
+          console.error('Error testing connection:', error);
+          this.uiManager.showSettingsStatus('Connection test failed: ' + error.message, 'error');
+        } finally {
+          testBtn.disabled = false;
+          console.log('Test button re-enabled');
         }
-      } catch (error) {
-        console.error('Error testing connection:', error);
-        this.uiManager.showSettingsStatus('Connection test failed. Please check your API key.', 'error');
-      } finally {
-        testBtn.disabled = false;
-      }
-    };
+      };
     } else {
       console.error('Test button not found!');
     }
