@@ -286,9 +286,6 @@ class UIManager {
   updateChatHistoryDisplay(chats, currentChatId, filteredChats = null) {
     const chatHistory = this.getElement('chatHistory');
     
-    // Update stats when updating chat history
-    this.updateStats(chats);
-    
     // Use filtered chats if provided, otherwise use all chats
     const chatsToDisplay = filteredChats || Array.from(chats.values());
     
@@ -589,51 +586,4 @@ class UIManager {
     status.style.display = 'none';
   }
 
-  /**
-   * Update the stats section with current usage numbers
-   * @param {Map} chats - Map of all chats
-   */
-  updateStats(chats) {
-    const totalChatsElement = this.getElement('totalChats');
-    const totalAnalysesElement = this.getElement('totalAnalyses');
-    
-    if (totalChatsElement && totalAnalysesElement) {
-      const totalChats = chats.size;
-      let totalAnalyses = 0;
-      
-      // Count total messages (analyses)
-      for (const chat of chats.values()) {
-        totalAnalyses += chat.messages.filter(msg => msg.type === 'user').length;
-      }
-      
-      // Animate the numbers
-      this.animateNumber(totalChatsElement, parseInt(totalChatsElement.textContent) || 0, totalChats);
-      this.animateNumber(totalAnalysesElement, parseInt(totalAnalysesElement.textContent) || 0, totalAnalyses);
-    }
-  }
-
-  /**
-   * Animate number changes for visual appeal
-   * @param {HTMLElement} element - Element to animate
-   * @param {number} from - Starting number
-   * @param {number} to - Ending number
-   */
-  animateNumber(element, from, to) {
-    if (from === to) return;
-    
-    const duration = 500;
-    const steps = Math.abs(to - from);
-    const increment = (to - from) / Math.min(steps, 20);
-    const stepDuration = duration / Math.min(steps, 20);
-    
-    let current = from;
-    const timer = setInterval(() => {
-      current += increment;
-      if ((increment > 0 && current >= to) || (increment < 0 && current <= to)) {
-        current = to;
-        clearInterval(timer);
-      }
-      element.textContent = Math.round(current);
-    }, stepDuration);
-  }
 }

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Misinformation Manager - Chat</title>
+  <title>debunkr Dashboard</title>
   <link rel="stylesheet" href="chat.css">
 </head>
 <body>
@@ -14,7 +14,7 @@
         <div class="logo">
           <span class="logo-icon">🛡️</span>
           <div class="logo-text-container">
-            <span class="logo-text">MisInfo Manager</span>
+            <span class="logo-text">debunkr Dashboard</span>
             <span class="logo-tagline">Truth through AI</span>
           </div>
         </div>
@@ -24,10 +24,6 @@
             <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82v.79a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z" stroke="currentColor" stroke-width="2"/>
           </svg>
         </button>
-        <button class="new-chat-btn" id="newChatBtn">
-          <span class="plus-icon">+</span>
-          New Chat
-        </button>
         
         <div class="search-container">
           <input type="text" id="chatSearch" placeholder="Search chats..." class="search-input">
@@ -35,21 +31,11 @@
         </div>
       </div>
       
-      <div class="stats-section" id="statsSection">
-        <div class="stats-header">
-          <span class="stats-icon">📊</span>
-          <span class="stats-title">Your Impact</span>
-        </div>
-        <div class="stats-grid">
-          <div class="stat-item">
-            <div class="stat-number" id="totalAnalyses">0</div>
-            <div class="stat-label">Claims Analyzed</div>
-          </div>
-          <div class="stat-item">
-            <div class="stat-number" id="totalChats">0</div>
-            <div class="stat-label">Conversations</div>
-          </div>
-        </div>
+      <div class="new-chat-section">
+        <button class="new-chat-btn" id="newChatBtn">
+          <span class="plus-icon">+</span>
+          New Chat
+        </button>
       </div>
       
       <div class="chat-history" id="chatHistory">
@@ -142,6 +128,7 @@
           </div>
           <div class="setting-help">
             <small>Your API key is encrypted and stored locally. Get your key from <a href="https://platform.openai.com/api-keys" target="_blank">OpenAI Platform</a>.</small>
+            <small style="margin-top: 8px; display: block;">💡 <strong>Alternative:</strong> You can also use debunkr directly at <a href="https://chatgpt.com/g/g-687ede3d6434819186585b0af10d250f-debunkr-assistant" target="_blank">ChatGPT</a> without an API key.</small>
           </div>
         </div>
         <div class="modal-actions">
@@ -149,6 +136,17 @@
           <button id="testConnection" class="test-btn">Test Connection</button>
         </div>
         <div id="settingsStatus" class="settings-status"></div>
+        
+        <div class="support-section">
+          <div class="support-divider"></div>
+          <div class="support-message">
+            <span class="support-icon">☕</span>
+            <div class="support-text">
+              <small>Help me keep the lights on and focus on this project</small>
+              <a href="https://ko-fi.com/debunkr" target="_blank" class="support-link">Support on Ko-fi</a>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>

@@ -144,57 +144,10 @@ body {
   font-weight: bold;
 }
 
-/* Stats Section */
-.stats-section {
+/* New Chat Section */
+.new-chat-section {
   padding: 16px;
   margin: 16px;
-  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-}
-
-.stats-header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 12px;
-}
-
-.stats-icon {
-  font-size: 16px;
-}
-
-.stats-title {
-  font-size: 13px;
-  font-weight: 600;
-  color: #0f172a;
-}
-
-.stats-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-}
-
-.stat-item {
-  text-align: center;
-  padding: 8px;
-}
-
-.stat-number {
-  font-size: 20px;
-  font-weight: 700;
-  color: #0f172a;
-  line-height: 1;
-}
-
-.stat-label {
-  font-size: 10px;
-  color: #64748b;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin-top: 4px;
 }
 
 .chat-history {
@@ -414,7 +367,7 @@ body {
   text-align: center;
   max-width: 600px;
   margin: 0 auto;
-  padding-top: 80px;
+  padding-top: 40px;
 }
 
 .welcome-icon {
@@ -1243,6 +1196,64 @@ body {
   color: #1d4ed8;
   border: 1px solid #bfdbfe;
   display: block;
+}
+
+/* Support Section */
+.support-section {
+  margin-top: 24px;
+}
+
+.support-divider {
+  height: 1px;
+  background: #e2e8f0;
+  margin-bottom: 16px;
+}
+
+.support-message {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px;
+  background: #f8fafc;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
+
+.support-icon {
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.support-text {
+  flex: 1;
+}
+
+.support-text small {
+  display: block;
+  color: #64748b;
+  font-size: 12px;
+  line-height: 1.4;
+  margin-bottom: 6px;
+}
+
+.support-link {
+  display: inline-block;
+  color: #0f172a;
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 13px;
+  padding: 4px 8px;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.support-link:hover {
+  background: #0f172a;
+  color: white;
+  border-color: #0f172a;
+  transform: translateY(-1px);
 }
 
 /* Message loading and error states */
