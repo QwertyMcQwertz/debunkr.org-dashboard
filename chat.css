@@ -28,23 +28,81 @@ body {
   flex-direction: column;
   border-right: 1px solid #e2e8f0;
   box-shadow: 1px 0 3px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.sidebar.collapsed {
+  width: 60px;
+}
+
+.sidebar.collapsed .logo-text-container {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.sidebar.collapsed .search-container {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.sidebar.collapsed .chat-history {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.sidebar.collapsed .new-chat-section {
+  opacity: 0;
+  pointer-events: none;
 }
 
 .sidebar-header {
-  padding: 24px 20px;
+  padding: 20px;
   border-bottom: 1px solid #e2e8f0;
   background: #ffffff;
   position: relative;
 }
 
+.header-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.collapse-btn {
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+  color: #64748b;
+}
+
+.collapse-btn:hover {
+  background: #e2e8f0;
+  color: #334155;
+}
+
+.sidebar.collapsed .collapse-btn svg {
+  transform: rotate(180deg);
+}
+
 .logo {
   display: flex;
   align-items: center;
-  margin-bottom: 20px;
   font-size: 16px;
   font-weight: 600;
   color: #0f172a;
   letter-spacing: 0.25px;
+  flex: 1;
+  min-width: 0;
 }
 
 .logo-icon {
@@ -64,6 +122,8 @@ body {
   display: flex;
   flex-direction: column;
   gap: 2px;
+  transition: opacity 0.3s ease;
+  overflow: hidden;
 }
 
 .logo-tagline {
@@ -105,6 +165,7 @@ body {
 .search-container {
   position: relative;
   margin-top: 16px;
+  transition: opacity 0.3s ease;
 }
 
 .search-input {
@@ -148,12 +209,14 @@ body {
 .new-chat-section {
   padding: 16px;
   margin: 16px;
+  transition: opacity 0.3s ease;
 }
 
 .chat-history {
   flex: 1;
   overflow-y: auto;
   padding: 20px 16px;
+  transition: opacity 0.3s ease;
 }
 
 
@@ -966,9 +1029,6 @@ body {
 
 /* Settings Button */
 .settings-btn {
-  position: absolute;
-  top: 24px;
-  right: 20px;
   background: #f1f5f9;
   border: 1px solid #e2e8f0;
   color: #475569;
@@ -976,12 +1036,12 @@ body {
   padding: 8px;
   border-radius: 6px;
   transition: all 0.15s ease;
-  display: flex !important;
+  display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 100;
   width: 32px;
   height: 32px;
+  flex-shrink: 0;
 }
 
 .settings-btn:hover {

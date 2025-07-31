@@ -126,6 +126,12 @@ class ChatManager {
    * Uses event delegation for dynamically created elements
    */
   initializeEventListeners() {
+    // Initialize sidebar state
+    this.sidebarCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+    if (this.sidebarCollapsed) {
+      this.uiManager.getElement('sidebar').classList.add('collapsed');
+    }
+
     // New chat button
     this.uiManager.getElement('newChatBtn').addEventListener('click', () => {
       this.createNewChat();
@@ -134,6 +140,11 @@ class ChatManager {
     // Settings button
     this.uiManager.getElement('settingsBtn').addEventListener('click', () => {
       this.openSettings();
+    });
+
+    // Sidebar collapse button
+    this.uiManager.getElement('collapseBtn').addEventListener('click', () => {
+      this.toggleSidebar();
     });
 
     // Search functionality
@@ -668,6 +679,24 @@ class ChatManager {
       this.uiManager.updateChatHistoryDisplay(this.chats, this.currentChatId);
       this.storageManager.forceSave(this.chats, this.nextChatId, this.currentChatId);
     }
+  }
+
+  /**
+   * Toggle sidebar collapsed/expanded state
+   * Saves state to localStorage for persistence
+   */
+  toggleSidebar() {
+    const sidebar = this.uiManager.getElement('sidebar');
+    this.sidebarCollapsed = !this.sidebarCollapsed;
+    
+    if (this.sidebarCollapsed) {
+      sidebar.classList.add('collapsed');
+    } else {
+      sidebar.classList.remove('collapsed');
+    }
+    
+    // Save state to localStorage
+    localStorage.setItem('sidebarCollapsed', this.sidebarCollapsed.toString());
   }
 
   extractDomainFromUrl(url) {
