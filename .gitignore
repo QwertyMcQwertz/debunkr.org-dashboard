@@ -1,0 +1,4 @@
+
+# Claude Code configuration (private)
+.claude/
+.claude/*
