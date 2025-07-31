@@ -39,6 +39,8 @@ class ChatManager {
     this.pendingText = null;
     /** @type {string|null} Source URL for pending text */
     this.pendingSource = null;
+    /** @type {boolean} Flag to track if settings event listeners are set up */
+    this.settingsListenersSetup = false;
     
     // Initialize modular components
     /** @type {StorageManager} Handles encryption and persistence */
@@ -732,6 +734,14 @@ class ChatManager {
 
   // Settings functionality
   async openSettings() {
+    const modal = this.uiManager.getElement('settingsModal');
+    
+    // Toggle functionality - close if already open
+    if (modal && modal.style.display !== 'none') {
+      this.uiManager.closeSettingsModal();
+      return;
+    }
+    
     this.uiManager.openSettingsModal();
     const apiKeyInput = this.uiManager.getElement('apiKeyInput');
     
@@ -745,8 +755,11 @@ class ChatManager {
       console.error('Error loading API key:', error);
     }
     
-    // Settings modal event listeners
-    this.setupSettingsEventListeners();
+    // Settings modal event listeners - only set up once
+    if (!this.settingsListenersSetup) {
+      this.setupSettingsEventListeners();
+      this.settingsListenersSetup = true;
+    }
   }
 
   setupSettingsEventListeners() {
@@ -756,6 +769,11 @@ class ChatManager {
     const toggleBtn = this.uiManager.getElement('toggleApiKey');
     const apiKeyInput = this.uiManager.getElement('apiKeyInput');
     const modal = this.uiManager.getElement('settingsModal');
+    
+    // Debug: Check if elements exist
+    console.log('Settings elements:', {
+      closeBtn, saveBtn, testBtn, toggleBtn, apiKeyInput, modal
+    });
 
     // Close modal handlers
     const closeModal = () => {
@@ -806,12 +824,16 @@ class ChatManager {
     };
 
     // Test connection
-    testBtn.onclick = async () => {
-      const apiKey = apiKeyInput.value.trim();
-      if (!apiKey) {
-        this.uiManager.showSettingsStatus('Please enter an API key first', 'error');
-        return;
-      }
+    if (testBtn) {
+      console.log('Setting up test button event listener');
+      testBtn.onclick = async () => {
+        console.log('Test connection button clicked');
+        const apiKey = apiKeyInput.value.trim();
+        console.log('API key length:', apiKey.length);
+        if (!apiKey) {
+          this.uiManager.showSettingsStatus('Please enter an API key first', 'error');
+          return;
+        }
 
       try {
         testBtn.disabled = true;
@@ -830,6 +852,9 @@ class ChatManager {
         testBtn.disabled = false;
       }
     };
+    } else {
+      console.error('Test button not found!');
+    }
   }
 }
 
