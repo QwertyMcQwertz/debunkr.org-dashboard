@@ -17,6 +17,7 @@ body {
 .app-container {
   display: flex;
   height: 100vh;
+  position: relative;
 }
 
 /* Sidebar Styles */
@@ -36,24 +37,42 @@ body {
   width: 60px;
 }
 
+.sidebar.collapsed .logo {
+  justify-content: center;
+}
+
+.sidebar.collapsed .logo-icon {
+  margin-right: 0;
+}
+
 .sidebar.collapsed .logo-text-container {
   opacity: 0;
   pointer-events: none;
+  width: 0;
+  overflow: hidden;
 }
 
 .sidebar.collapsed .search-container {
   opacity: 0;
   pointer-events: none;
+  height: 0;
+  overflow: hidden;
+  margin: 0;
 }
 
 .sidebar.collapsed .chat-history {
   opacity: 0;
   pointer-events: none;
+  overflow: hidden;
 }
 
 .sidebar.collapsed .new-chat-section {
   opacity: 0;
   pointer-events: none;
+  height: 0;
+  overflow: hidden;
+  margin: 0;
+  padding: 0;
 }
 
 .sidebar-header {
@@ -66,6 +85,7 @@ body {
 .header-top {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 12px;
   margin-bottom: 16px;
 }
@@ -94,6 +114,35 @@ body {
   transform: rotate(180deg);
 }
 
+/* Global Settings Button */
+.global-settings-btn {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 1001;
+  background: rgba(241, 245, 249, 0.7);
+  border: 1px solid rgba(226, 232, 240, 0.7);
+  color: #475569;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 6px;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.global-settings-btn:hover {
+  background: rgba(241, 245, 249, 0.95);
+  color: #334155;
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
 .logo {
   display: flex;
   align-items: center;
@@ -101,7 +150,6 @@ body {
   font-weight: 600;
   color: #0f172a;
   letter-spacing: 0.25px;
-  flex: 1;
   min-width: 0;
 }
 
@@ -1028,26 +1076,7 @@ body {
 }
 
 /* Settings Button */
-.settings-btn {
-  background: #f1f5f9;
-  border: 1px solid #e2e8f0;
-  color: #475569;
-  cursor: pointer;
-  padding: 8px;
-  border-radius: 6px;
-  transition: all 0.15s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  flex-shrink: 0;
-}
-
-.settings-btn:hover {
-  background: #f1f5f9;
-  color: #334155;
-}
+/* Remove old settings button styles as it's now global */
 
 /* Modal Styles */
 .modal-overlay {

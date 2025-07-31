@@ -137,7 +137,7 @@ class ChatManager {
       this.createNewChat();
     });
 
-    // Settings button
+    // Global settings button
     this.uiManager.getElement('settingsBtn').addEventListener('click', () => {
       this.openSettings();
     });
