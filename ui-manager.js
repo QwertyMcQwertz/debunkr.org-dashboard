@@ -132,7 +132,7 @@ class UIManager {
             <div class="step-list">
               <div class="step">1. Configure your OpenAI API key in <span class="settings-hint">⚙️ Settings</span></div>
               <div class="step">2. Highlight text on any webpage</div>
-              <div class="step">3. Right-click → "MisInfo Manager" → "New Chat"</div>
+              <div class="step">3. Right-click → "debunkr" → "New Chat"</div>
             </div>
           </div>
         </div>
