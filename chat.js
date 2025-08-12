@@ -507,7 +507,7 @@ class ChatManager {
     const loadingMessage = {
       id: `loading-${Date.now()}`,
       type: 'assistant',
-      content: 'debunkr is thinking...',
+      content: 'debunkr.org Assistant is thinking...',
       isLoading: true,
       timestamp: new Date().toISOString()
     };

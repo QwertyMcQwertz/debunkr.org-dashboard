@@ -133,7 +133,7 @@ class MessageController {
 
       // Add loading message
       const loadingMessage = chat.addMessage(
-        'debunkr is thinking...', 
+        'debunkr.org Assistant is thinking...', 
         'assistant',
         [],
         { isLoading: true }

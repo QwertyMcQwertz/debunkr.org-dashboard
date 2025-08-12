@@ -37,7 +37,7 @@ class ChatApplication {
     /** @type {Object} Tab notification system */
     this.tabNotification = {
       isBlinking: false,
-      originalTitle: document.title,
+      originalTitle: 'debunkr.org Dashboard',
       originalFavicon: null,
       blinkInterval: null,
       blinkCount: 0,
