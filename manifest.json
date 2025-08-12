@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "debunkr Dashboard",
+  "name": "debunkr.org Dashboard",
   "version": "2.1",
   "description": "AI-powered misinformation analysis with egalitarian perspective, powered by Poe.",
   "permissions": [

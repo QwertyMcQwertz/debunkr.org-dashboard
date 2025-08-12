@@ -164,7 +164,7 @@ class UIManager {
     const messagesHtml = currentChat.messages.map(message => `
       <div class="message ${message.type} ${message.isLoading ? 'loading' : ''} ${message.isError ? 'error' : ''}" data-message-id="${message.id}">
         <div class="message-avatar">
-          ${message.type === 'user' ? 'U' : 'AI'}
+          ${message.type === 'user' ? 'U' : 'dA'}
         </div>
         <div class="message-container">
           <div class="message-content">
