@@ -1,278 +1,162 @@
-# 🛡️ MisInfo Manager
+# 🌐 debunkr.org Dashboard
 
-A Chrome extension for analyzing and fact-checking information with a ChatGPT-like interface powered by Poe's API. Built with a modern modular architecture featuring client-side encryption, intelligent quote blocks, and seamless web integration for comprehensive misinformation analysis.
+**Scroll with Scrutiny.**
 
-## ✨ Features
+The debunkr.org Dashboard is a Chrome extension that helps you analyze suspicious content on the web using AI-powered analysis. Simply highlight text on any website, right-click, and let our egalitarian AI analyze it for bias, manipulation, and power structures.
 
-### 📱 Chat Interface
-- **Clean ChatGPT-style interface** with sidebar and main chat area
-- **Multiple conversations** - organize different fact-checking sessions
-- **Persistent chat history** with AES-GCM encrypted storage
-- **Smart tab management** - prevents duplicate tabs, focuses existing ones
-- **Copy functionality** - always-visible copy buttons for all messages
-- **Inline title editing** - click chat titles to rename directly
+## ✨ What You Can Do
 
-### 🖱️ Context Menu Integration
-- **Right-click any selected text** to instantly analyze it
-- **"New Chat"** - starts fresh conversation with selected text
-- **Continue existing chats** - add selected text to previous conversations
-- **Smart quote blocks** - selected text appears as styled quotes with source attribution
-- **Chat selection interface** - choose existing chats when multiple options available
+### 🔍 **Smart Analysis**
+- **Questions power structures** and identifies bias in web content
+- **Examines who benefits** from particular narratives and viewpoints  
+- **Promotes critical thinking** about information you encounter online
+- **Provides detailed analysis** with sources and context
 
-### 🔗 Source Tracking & Quote Blocks
-- **Automatic source detection** - captures webpage URL when using context menu
-- **Visual quote blocks** - selected text displayed with quotation marks and source links
-- **Source URL isolation** - source information visible to users but not sent to AI
-- **Clickable source headers** - easily return to original webpage
-- **Smart URL management** - focuses existing tabs instead of creating duplicates
-- **Clean chat titles** - uses domain names for easy identification
+### 🖱️ **Easy to Use**
+- **Right-click any text** on any website to analyze it instantly
+- **Chat-style interface** that feels familiar and intuitive
+- **Multiple conversations** - organize different analysis sessions
+- **Image support** - analyze screenshots and images with text
+- **Tab notifications** - know when your analysis is ready even if you switch tabs
 
-### 🗂️ Chat Management
-- **Rename chats** - hover over chat → click edit icon OR click title in header
-- **Delete chats** - hover over chat → click delete icon  
-- **Search functionality** - search through chat titles and message content
-- **Auto-sorted history** - most recent conversations at top
-- **Empty chat prevention** - reuses empty chats instead of creating duplicates
-- **Smart chat optimization** - efficient chat switching and loading
+### 💬 **Conversation Management**  
+- **Save all your conversations** for future reference
+- **Rename and organize** your analysis sessions
+- **Search through** your chat history to find previous analyses
+- **Continue conversations** by adding new content to existing chats
 
-### 🔒 Security & Privacy
-- **AES-GCM 256-bit encryption** for all chat data using Web Crypto API
-- **Encrypted API key storage** - Poe API keys encrypted before storage
-- **Local storage only** - all data stays on your device
-- **XSS protection** - comprehensive input sanitization
-- **Content Security Policy** - prevents unauthorized script execution
-- **Secure key generation** - crypto-secure random encryption keys
-- **Modular security architecture** - isolated storage and encryption layers
+### 🖼️ **Image Analysis**
+- **Upload images** directly or paste them into your conversations
+- **Analyze screenshots** of social media posts, articles, or any visual content
+- **Combine text and images** for comprehensive analysis
+- **Automatic image compression** handles large files efficiently
 
 ## 🚀 Installation
 
-### For Development
-1. **Clone or download** this repository
-2. **Open Chrome** and navigate to `chrome://extensions/`
-3. **Enable "Developer mode"** (toggle in top right)
-4. **Click "Load unpacked"** and select the `misinformation-manager` folder
-5. **Pin the extension** to your toolbar for easy access
+### Step 1: Download the Extension
+1. **Download** or clone this repository to your computer
+2. **Unzip the folder** if you downloaded a zip file
 
-### For Production
-*Note: This extension is currently in development and not published to Chrome Web Store*
+### Step 2: Install in Chrome
+1. **Open Chrome** and go to `chrome://extensions/`
+2. **Turn on "Developer mode"** using the toggle in the top-right corner
+3. **Click "Load unpacked"** and select the `misinformation-manager` folder you downloaded
+4. **Pin the extension** to your toolbar by clicking the puzzle piece icon and pinning "debunkr.org Dashboard"
 
-## ⚙️ Setup
+### Step 3: Get Your API Key
+1. **Visit [Poe API Keys](https://poe.com/api_key)** to create your free API key
+2. **Copy your API key** (it starts with "poe-")
 
-### Configure Poe API Key
-1. **Get API Key**: Visit [Poe API Keys](https://poe.com/api_key) to create an API key
-2. **Open Extension**: Click the MisInfo Manager icon or use context menu
-3. **Access Settings**: Click the ⚙️ settings icon in the top-right corner
-4. **Enter API Key**: Paste your Poe API key and click "Save"
-5. **Test Connection**: Click "Test API Key" to verify it works
+### Step 4: Set Up the Extension
+1. **Click the debunkr.org Dashboard icon** in your Chrome toolbar
+2. **Click the ⚙️ Settings button** (you'll see this in the welcome message)
+3. **Paste your API key** and click "Save"
+4. **Click "Test Connection"** to make sure everything works
 
-*Note: API keys are encrypted with AES-GCM before storage for maximum security*
+That's it! You're ready to start analyzing web content.
 
-## 💡 Usage
+## 💡 How to Use
 
-### Starting a New Analysis
+### 🆕 Start Your First Analysis
 
-**Method 1: Extension Popup**
-1. Click the MisInfo Manager icon in your toolbar
-2. Click "Open Chat Interface"
+**The Easy Way (Recommended):**
+1. **Find some text** on any website that looks suspicious or biased
+2. **Highlight the text** by clicking and dragging over it
+3. **Right-click** on the highlighted text
+4. **Choose "debunkr.org Dashboard" → "New Chat"**
+5. **Watch the magic happen** - the text appears in a clean chat interface with AI analysis
 
-**Method 2: Context Menu (Recommended)**
-1. **Select text** on any webpage you want to analyze
-2. **Right-click** → hover over "MisInfo Manager"
-3. Choose **"New Chat"** to start fresh analysis
-4. Selected text appears as a **styled quote block** with source URL
-5. Add your own questions or analysis in the input field
+**The Direct Way:**
+1. **Click the debunkr.org Dashboard icon** in your toolbar
+2. **Type or paste** any text you want analyzed
+3. **Hit Enter** or click the send button
 
-### Continuing Existing Conversations
-1. **Select text** on any webpage
-2. **Right-click** → hover over "MisInfo Manager"  
-3. Choose from your **existing chat names** or select "Continue in existing chat"
-4. Selected text appears as **quote block** in chosen conversation
-5. Source URL is shown in UI but not sent to AI (maintains conversation context)
+### 🖼️ Analyzing Images
 
-### Managing Chats
-- **Rename**: Hover over chat → click ✏️ edit icon OR click title in chat header
-- **Delete**: Hover over chat → click 🗑️ delete icon → confirm
-- **Navigate**: Click any chat name to switch conversations
-- **Search**: Use search box in sidebar to find chats by title or content
-- **Copy Messages**: Click copy button on any message to copy plain text
+1. **Open the debunkr.org Dashboard**
+2. **Click the 📷 image icon** next to the text input
+3. **Select an image** from your computer or **paste an image** directly
+4. **Add text** if you want to ask specific questions about the image
+5. **Send** and get detailed visual analysis
 
-### Using Source Links
-- **New chats from context menu** show clickable source URL in header
-- **Click the header URL** to return to original webpage
-- **Smart tab behavior** - focuses existing tab if URL already open
+### 📚 Managing Your Conversations
 
-## 🏗️ Architecture
+**Rename a Chat:**
+- **Hover over** any chat in the sidebar and **click the ✏️ edit icon**
+- Or **click the chat title** at the top and edit it directly
 
-Built with **modern modular architecture** for maintainability, security, and performance.
+**Delete a Chat:**
+- **Hover over** any chat in the sidebar and **click the 🗑️ delete icon**
 
-### File Structure
-```
-misinformation-manager/
-├── manifest.json          # Extension configuration (Manifest V3)
-├── popup.html/js          # Extension popup interface
-├── background.js          # Service worker for context menus & tab management
-├── chat.html/css/js       # Main chat interface
-├── storage-manager.js     # Data persistence & encryption module
-├── poe-client.js          # Poe API communication module
-├── ui-manager.js          # DOM manipulation & UI module
-├── ARCHITECTURE.md        # Detailed architecture documentation
-├── API-REFERENCE.md       # Complete API documentation
-├── CSS-DOCUMENTATION.md   # Comprehensive CSS guide
-└── README.md              # This file
-```
+**Find Old Conversations:**
+- **Use the search box** at the top of the sidebar to search through all your chats
 
-### Modular Architecture
+**Continue a Previous Conversation:**
+1. **Highlight text** on any webpage
+2. **Right-click** → "debunkr.org Dashboard"
+3. **Choose one of your existing chat names** to add the text to that conversation
 
-**🎯 ChatManager (`chat.js`)** - *Main Orchestrator*
-- Application lifecycle management and URL parameter handling
-- Chat conversation management and context menu integration
-- Event coordination between all modules
-- Poe API integration
+### 🔔 Tab Notifications
 
-**💾 StorageManager (`storage-manager.js`)** - *Data Layer*
-- AES-GCM 256-bit encryption for all sensitive data
-- Debounced saves to prevent excessive storage operations
-- Secure API key management with encryption
-- Fallback mechanisms for corrupted data
+When you're waiting for an analysis and switch to another tab, you'll see:
+- **The tab icon blinks red** with an exclamation mark
+- **The tab title shows "💬 New Message"** to let you know your analysis is ready
 
-**🤖 PoeClient (`poe-client.js`)** - *API Layer*
-- Poe API v1 implementation
-- Simplified, single-call API interaction.
-- Comprehensive error handling and timeout protection
+## 🛠️ Settings & Features
 
-**🎨 UIManager (`ui-manager.js`)** - *Presentation Layer*
-- DOM manipulation with cached element access
-- Quote block rendering and copy functionality
-- Settings modal and chat history management
-- Responsive UI components and state management
+### ⚙️ Settings Panel
+- **API Key Management** - Update or test your Poe API key anytime
+- **Connection Testing** - Make sure everything is working properly
 
-**⚡ Background Script (`background.js`)** - *Service Worker*
-- Context menu management with debounced updates
-- Smart tab management (prevents duplicates)
-- Routes context menu actions to chat interface
+### 🎨 Interface Features
+- **Clean Design** - Familiar chat interface that's easy to use
+- **Dark Mode Ready** - Comfortable for extended reading sessions  
+- **Responsive Layout** - Works well at any window size
+- **Smart Tab Management** - Won't create duplicate tabs when opening source links
 
-## 🔧 Technical Details
+### 🔒 Privacy & Data
+- **Everything stays local** - Your conversations are stored on your device only
+- **No tracking** - We don't collect any personal information
+- **Encrypted storage** - Your data is protected even on your own computer
+- **Source attribution** - See where analyzed text came from with clickable links
 
-### Permissions Required
-- `tabs` - Smart tab management and URL detection
-- `storage` - Encrypted local data persistence  
-- `contextMenus` - Right-click menu integration
-- `activeTab` - Access current tab URL for source tracking
-- `host_permissions` - Access to `https://api.poe.com/*`
+## 🆘 Need Help?
 
-### Storage Format
-```javascript
-{
-  encryptedChats: [...],        // AES-GCM encrypted chat data
-  chatTitles: {...},            // Unencrypted titles for context menu
-  encryptionKey: [...],         // AES-GCM 256-bit encryption key
-  encryptedPoeKey: [...],    // Encrypted Poe API key
-  nextChatId: 1,                // Auto-increment counter
-  currentChatId: 1              // Currently active chat
-}
-```
+### ❌ Common Issues & Solutions
 
-### Security Architecture
-- **Client-side encryption**: All sensitive data encrypted before storage
-- **Secure key management**: Automatic AES-GCM key generation
-- **API key protection**: Poe keys encrypted with same system
-- **XSS prevention**: Comprehensive input sanitization
-- **Privacy-first**: No user data sent to third parties (except Poe API)
+**"Please make sure your Poe API key is configured"**
+- Go to Settings (⚙️) and add your API key from [poe.com/api_key](https://poe.com/api_key)
+- Make sure you copied the full key (starts with "poe-")
+- Try the "Test Connection" button
 
-### Context Menu Structure
-```
-MisInfo Manager
-├── New Chat
-├── [Chat Title 1]
-├── [Chat Title 2]
-└── ... (up to 5 recent chats)
-```
+**Right-click menu doesn't show debunkr.org Dashboard**
+- Make sure you **selected text first** before right-clicking
+- Try refreshing the webpage
+- Check that the extension is enabled at `chrome://extensions/`
 
-## 🤝 Contributing
+**Analysis takes a long time or times out**
+- Large images or very long text can take longer to process
+- Try breaking up very long text into smaller pieces
+- Check your internet connection
 
-### Development Setup
-1. Make changes to source files
-2. **Reload extension** in `chrome://extensions/` (click refresh icon)
-3. Test functionality across all entry points
-4. Ensure security measures remain intact
+**Can't see my old conversations**
+- Your chats are saved locally - they should persist between browser sessions
+- If you're not seeing them, try refreshing the extension page
+- Make sure you didn't clear your browser data
 
-### Code Style
-- **ES6+ JavaScript** with async/await patterns
-- **Semantic HTML** with accessibility considerations  
-- **Modern CSS** with flexbox layouts and transitions
-- **No external dependencies** - vanilla JavaScript only
+**Images won't upload**
+- Supported formats: JPEG, PNG, GIF, WebP
+- Large images are automatically compressed
+- Try copying and pasting the image instead of uploading
 
-### Security Guidelines
-- **Never commit secrets** or API keys
-- **Sanitize all user input** before processing
-- **Use CSP headers** to prevent code injection
-- **Encrypt sensitive data** before storage
-
-## 🐛 Troubleshooting
-
-### API Key Issues
-- **"API key not configured"**: Click settings ⚙️ and add your Poe API key
-- **"Failed to connect"**: Verify API key is valid at [Poe API Keys](https://poe.com/api_key)
-- **"Rate limit exceeded"**: Wait a few minutes or check your Poe usage
-
-### Extension Not Loading
-- Check that all files are in the correct directory structure
-- Verify `manifest.json` is valid JSON
-- Look for errors in Chrome DevTools → Extensions page
-- Ensure all modular files (storage-manager.js, poe-client.js, ui-manager.js) are present
-
-### Context Menu Not Appearing  
-- Ensure you've **selected text** before right-clicking
-- Check that extension permissions are granted
-- Try reloading the extension
-- Verify background script is running (check service worker in Extensions page)
-
-### Chats Not Persisting
-- Check browser storage permissions
-- Look for encryption/decryption errors in console
-- Verify Chrome storage quotas aren't exceeded
-- Check if encryption key was corrupted (extension will show warning)
-
-### Quote Blocks Not Displaying
-- Ensure selected text is properly formatted
-- Check if source URL is valid
-- Verify UI components are loading correctly
-
-### Copy Functionality Not Working
-- Modern browsers: Check clipboard permissions
-- Older browsers: Extension includes fallback copy method
-- Verify copy buttons are visible and clickable
-
-## 📝 License
-
-This project is for educational and research purposes. Please ensure compliance with your local laws and the terms of service of websites you analyze.
-
-## 🚧 Future Enhancements
-
-- **Export conversations** to various formats (JSON, PDF, HTML)
-- **Advanced search** with filters and highlighting
-- **Custom AI model integration** (Claude, Gemini, local models)
-- **Batch analysis** of multiple sources simultaneously
-- **Collaboration features** for team fact-checking
-- **Browser sync** across devices with end-to-end encryption
-- **Plugin system** for custom analyzers and data sources
-- **Advanced quote management** with annotation capabilities
-- **Performance analytics** and usage insights
-- **Mobile companion app** for cross-platform access
+### 💬 Get Support
+If you're still having trouble, you can:
+- Check the browser console for error messages (F12 → Console tab)
+- Try reloading the extension at `chrome://extensions/`
+- Restart your browser if issues persist
 
 ---
 
-## 📚 Documentation
+**Ready to start analyzing web content with a critical eye? Install the debunkr.org Dashboard and begin scrolling with scrutiny!** 🔍
 
-- **[Architecture Guide](ARCHITECTURE.md)** - Detailed system architecture and component interactions
-- **[API Reference](API-REFERENCE.md)** - Complete API documentation for all classes and methods
-- **[CSS Documentation](CSS-DOCUMENTATION.md)** - Comprehensive styling guide and design system
-
----
-
-**Version**: 2.1
-**Architecture**: Modular (4 core modules)  
-**Manifest Version**: 3  
-**Poe API**: v1
-**Encryption**: AES-GCM 256-bit  
-**Minimum Chrome Version**: 88+
+*Version 2.1 - Powered by Poe AI*
