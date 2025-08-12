@@ -13,46 +13,32 @@
       <div class="sidebar-header">
         <div class="header-top">
           <div class="logo">
-            <span class="logo-icon">🛡️</span>
-            <div class="logo-text-container">
-              <span class="logo-text">debunkr Dashboard</span>
-              <span class="logo-tagline">Truth through AI</span>
-            </div>
+            <img src="debunkr_logo.svg" alt="debunkr" class="sidebar-main-logo">
           </div>
           <button class="collapse-btn" id="collapseBtn" title="Toggle sidebar">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-              <path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
           </button>
         </div>
-        
         <div class="search-container" id="searchContainer">
           <input type="text" id="chatSearch" placeholder="Search chats..." class="search-input">
           <div class="search-icon">⌕</div>
         </div>
       </div>
-      
       <div class="new-chat-section">
         <button class="new-chat-btn" id="newChatBtn">
           <span class="plus-icon">+</span>
           New Chat
         </button>
       </div>
-      
       <div class="chat-history" id="chatHistory">
         <!-- Chat items will be dynamically generated -->
       </div>
-      
     </div>
     
     <!-- Main Chat Area -->
     <div class="main-content">
-      <!-- Settings Button -->
       <button class="global-settings-btn" id="settingsBtn" title="Settings">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-          <path d="M12 15a3 3 0 100-6 3 3 0 000 6z" stroke="currentColor" stroke-width="2"/>
-          <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82v.79a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z" stroke="currentColor" stroke-width="2"/>
-        </svg>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 15a3 3 0 100-6 3 3 0 000 6z"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82v.79a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
       </button>
       <div class="chat-header" id="chatHeader" style="display: none;">
         <div class="chat-title-container">
@@ -60,60 +46,15 @@
         </div>
         <div class="chat-source-title" id="chatSourceTitle"></div>
       </div>
-      
       <div class="messages-container" id="messagesContainer">
-        <div class="welcome-message">
-          <div class="welcome-icon">🛡️</div>
-          <h2>Fight Misinformation with AI</h2>
-          <p>Highlight suspicious text on any website, right-click, and let our egalitarian AI analyze it for bias, manipulation, and power structures.</p>
-          
-          <div class="welcome-features">
-            <div class="feature-item">
-              <span class="feature-icon">🎯</span>
-              <div class="feature-text">
-                <strong>Smart Analysis</strong>
-                <small>Questions power structures and identifies bias</small>
-              </div>
-            </div>
-            <div class="feature-item">
-              <span class="feature-icon">🔍</span>
-              <div class="feature-text">
-                <strong>Source Critical</strong>
-                <small>Examines who benefits from particular narratives</small>
-              </div>
-            </div>
-            <div class="feature-item">
-              <span class="feature-icon">💡</span>
-              <div class="feature-text">
-                <strong>Media Literacy</strong>
-                <small>Promotes critical thinking about information</small>
-              </div>
-            </div>
-          </div>
-          
-          <div class="get-started-cta">
-            <h3>Get Started:</h3>
-            <div class="step-list">
-              <div class="step">1. Configure your OpenAI API key in <span class="settings-hint">⚙️ Settings</span></div>
-              <div class="step">2. Highlight text on any webpage</div>
-              <div class="step">3. Right-click → "debunkr" → "New Chat"</div>
-            </div>
-          </div>
-        </div>
+        <!-- Welcome message or chat messages will be rendered here -->
       </div>
-      
       <div class="input-container">
         <div id="inputQuoteContainer" style="display: none;"></div>
         <div class="input-wrapper">
-          <textarea 
-            id="messageInput" 
-            placeholder="Ask me to analyze any information, fact-check claims, or verify sources..."
-            rows="1"
-          ></textarea>
+          <textarea id="messageInput" placeholder="Ask me to analyze any information, fact-check claims, or verify sources..." rows="1"></textarea>
           <button class="send-button" id="sendButton" disabled>
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-              <path d="M2.5 10L17.5 10M17.5 10L12.5 5M17.5 10L12.5 15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 10L17.5 10M17.5 10L12.5 5M17.5 10L12.5 15"/></svg>
           </button>
         </div>
       </div>
@@ -129,22 +70,23 @@
       </div>
       <div class="modal-body">
         <div class="setting-group">
-          <label for="apiKeyInput">OpenAI API Key</label>
+          <label for="apiKeyInput">Poe API Key</label>
           <div class="api-key-container">
-            <input type="password" id="apiKeyInput" placeholder="sk-..." class="api-key-input">
+            <input type="password" id="apiKeyInput" placeholder="Enter your Poe API key..." class="api-key-input">
             <button type="button" id="toggleApiKey" class="toggle-key-btn" title="Show/Hide API Key">👁️</button>
           </div>
           <div class="setting-help">
-            <small>Your API key is encrypted and stored locally. Get your key from <a href="https://platform.openai.com/api-keys" target="_blank">OpenAI Platform</a>.</small>
-            <small style="margin-top: 8px; display: block;">💡 <strong>Alternative:</strong> You can also use debunkr directly at <a href="https://chatgpt.com/g/g-687ede3d6434819186585b0af10d250f-debunkr-assistant" target="_blank">ChatGPT</a> without an API key.</small>
+            <small>Your API key is encrypted and stored locally. Get your key from <a href="https://poe.com/api_key" target="_blank">Poe's API Keys page</a>.</small>
           </div>
         </div>
         <div class="modal-actions">
           <button id="saveSettings" class="save-btn">Save Settings</button>
-          <button id="testConnection" class="test-btn">Test Connection</button>
+          <div class="test-btn-container">
+            <button id="testConnection" class="test-btn">Test Connection</button>
+            <small class="api-usage-note"><em>(warning: uses API tokens!)</em></small>
+          </div>
         </div>
         <div id="settingsStatus" class="settings-status"></div>
-        
         <div class="support-section">
           <div class="support-divider"></div>
           <div class="support-message">
@@ -160,7 +102,7 @@
   </div>
   
   <script src="storage-manager.js"></script>
-  <script src="openai-client.js"></script>
+  <script src="poe-client.js"></script>
   <script src="ui-manager.js"></script>
   <script src="chat.js"></script>
 </body>

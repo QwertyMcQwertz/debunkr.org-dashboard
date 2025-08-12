@@ -2,3 +2,6 @@
 # Claude Code configuration (private)
 .claude/
 .claude/*
+
+# Temporary workspace
+temp-workspace/

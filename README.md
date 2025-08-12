@@ -1,6 +1,6 @@
 # 🛡️ MisInfo Manager
 
-A Chrome extension for analyzing and fact-checking information with a ChatGPT-like interface powered by OpenAI's Assistant API. Built with a modern modular architecture featuring client-side encryption, intelligent quote blocks, and seamless web integration for comprehensive misinformation analysis.
+A Chrome extension for analyzing and fact-checking information with a ChatGPT-like interface powered by Poe's API. Built with a modern modular architecture featuring client-side encryption, intelligent quote blocks, and seamless web integration for comprehensive misinformation analysis.
 
 ## ✨ Features
 
@@ -37,7 +37,7 @@ A Chrome extension for analyzing and fact-checking information with a ChatGPT-li
 
 ### 🔒 Security & Privacy
 - **AES-GCM 256-bit encryption** for all chat data using Web Crypto API
-- **Encrypted API key storage** - OpenAI API keys encrypted before storage
+- **Encrypted API key storage** - Poe API keys encrypted before storage
 - **Local storage only** - all data stays on your device
 - **XSS protection** - comprehensive input sanitization
 - **Content Security Policy** - prevents unauthorized script execution
@@ -58,11 +58,11 @@ A Chrome extension for analyzing and fact-checking information with a ChatGPT-li
 
 ## ⚙️ Setup
 
-### Configure OpenAI API Key
-1. **Get API Key**: Visit [OpenAI API](https://platform.openai.com/api-keys) to create an API key
+### Configure Poe API Key
+1. **Get API Key**: Visit [Poe API Keys](https://poe.com/api_key) to create an API key
 2. **Open Extension**: Click the MisInfo Manager icon or use context menu
 3. **Access Settings**: Click the ⚙️ settings icon in the top-right corner
-4. **Enter API Key**: Paste your OpenAI API key and click "Save"
+4. **Enter API Key**: Paste your Poe API key and click "Save"
 5. **Test Connection**: Click "Test API Key" to verify it works
 
 *Note: API keys are encrypted with AES-GCM before storage for maximum security*
@@ -113,7 +113,7 @@ misinformation-manager/
 ├── background.js          # Service worker for context menus & tab management
 ├── chat.html/css/js       # Main chat interface
 ├── storage-manager.js     # Data persistence & encryption module
-├── openai-client.js       # OpenAI API communication module
+├── poe-client.js          # Poe API communication module
 ├── ui-manager.js          # DOM manipulation & UI module
 ├── ARCHITECTURE.md        # Detailed architecture documentation
 ├── API-REFERENCE.md       # Complete API documentation
@@ -127,7 +127,7 @@ misinformation-manager/
 - Application lifecycle management and URL parameter handling
 - Chat conversation management and context menu integration
 - Event coordination between all modules
-- OpenAI Assistant API integration with intelligent polling
+- Poe API integration
 
 **💾 StorageManager (`storage-manager.js`)** - *Data Layer*
 - AES-GCM 256-bit encryption for all sensitive data
@@ -135,10 +135,9 @@ misinformation-manager/
 - Secure API key management with encryption
 - Fallback mechanisms for corrupted data
 
-**🤖 OpenAIClient (`openai-client.js`)** - *API Layer*
-- OpenAI Assistants API v2 implementation
-- Exponential backoff polling (500ms to 8s intervals)
-- Thread and run management for conversation context
+**🤖 PoeClient (`poe-client.js`)** - *API Layer*
+- Poe API v1 implementation
+- Simplified, single-call API interaction.
 - Comprehensive error handling and timeout protection
 
 **🎨 UIManager (`ui-manager.js`)** - *Presentation Layer*
@@ -159,7 +158,7 @@ misinformation-manager/
 - `storage` - Encrypted local data persistence  
 - `contextMenus` - Right-click menu integration
 - `activeTab` - Access current tab URL for source tracking
-- `webRequest` (optional) - Enhanced source URL detection
+- `host_permissions` - Access to `https://api.poe.com/*`
 
 ### Storage Format
 ```javascript
@@ -167,7 +166,7 @@ misinformation-manager/
   encryptedChats: [...],        // AES-GCM encrypted chat data
   chatTitles: {...},            // Unencrypted titles for context menu
   encryptionKey: [...],         // AES-GCM 256-bit encryption key
-  encryptedOpenAIKey: [...],    // Encrypted OpenAI API key
+  encryptedPoeKey: [...],    // Encrypted Poe API key
   nextChatId: 1,                // Auto-increment counter
   currentChatId: 1              // Currently active chat
 }
@@ -176,9 +175,9 @@ misinformation-manager/
 ### Security Architecture
 - **Client-side encryption**: All sensitive data encrypted before storage
 - **Secure key management**: Automatic AES-GCM key generation
-- **API key protection**: OpenAI keys encrypted with same system
+- **API key protection**: Poe keys encrypted with same system
 - **XSS prevention**: Comprehensive input sanitization
-- **Privacy-first**: No user data sent to third parties (except OpenAI API)
+- **Privacy-first**: No user data sent to third parties (except Poe API)
 
 ### Context Menu Structure
 ```
@@ -212,15 +211,15 @@ MisInfo Manager
 ## 🐛 Troubleshooting
 
 ### API Key Issues
-- **"API key not configured"**: Click settings ⚙️ and add your OpenAI API key
-- **"Failed to connect"**: Verify API key is valid at [OpenAI API Keys](https://platform.openai.com/api-keys)
-- **"Rate limit exceeded"**: Wait a few minutes or check your OpenAI usage
+- **"API key not configured"**: Click settings ⚙️ and add your Poe API key
+- **"Failed to connect"**: Verify API key is valid at [Poe API Keys](https://poe.com/api_key)
+- **"Rate limit exceeded"**: Wait a few minutes or check your Poe usage
 
 ### Extension Not Loading
 - Check that all files are in the correct directory structure
 - Verify `manifest.json` is valid JSON
 - Look for errors in Chrome DevTools → Extensions page
-- Ensure all modular files (storage-manager.js, openai-client.js, ui-manager.js) are present
+- Ensure all modular files (storage-manager.js, poe-client.js, ui-manager.js) are present
 
 ### Context Menu Not Appearing  
 - Ensure you've **selected text** before right-clicking
@@ -271,9 +270,9 @@ This project is for educational and research purposes. Please ensure compliance 
 
 ---
 
-**Version**: 2.0  
+**Version**: 2.1
 **Architecture**: Modular (4 core modules)  
 **Manifest Version**: 3  
-**OpenAI API**: Assistants API v2  
+**Poe API**: v1
 **Encryption**: AES-GCM 256-bit  
 **Minimum Chrome Version**: 88+

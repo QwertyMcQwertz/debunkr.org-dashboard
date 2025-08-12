@@ -34,11 +34,24 @@ body {
 }
 
 .sidebar.collapsed {
-  width: 60px;
+  width: 120px;
 }
 
 .sidebar.collapsed .logo {
   justify-content: center;
+  margin-bottom: 4px;
+}
+
+.sidebar.collapsed .sidebar-header {
+  padding: 12px 8px 16px 8px;
+  position: relative;
+}
+
+.sidebar.collapsed .header-top {
+  flex-direction: column;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 8px;
 }
 
 .sidebar.collapsed .logo-icon {
@@ -46,11 +59,10 @@ body {
 }
 
 .sidebar.collapsed .collapse-btn {
-  position: absolute;
-  top: 8px;
-  right: 8px;
+  position: static;
   width: 24px;
   height: 24px;
+  margin: 0;
 }
 
 .sidebar.collapsed .logo-text-container {
@@ -58,6 +70,14 @@ body {
   pointer-events: none;
   width: 0;
   overflow: hidden;
+}
+
+.sidebar.collapsed .sidebar-main-logo {
+  height: 32px;
+  width: auto;
+  max-width: 100px;
+  object-fit: contain;
+  margin-top: 4px;
 }
 
 .sidebar.collapsed .search-container {
@@ -96,6 +116,12 @@ body {
   justify-content: space-between;
   gap: 12px;
   margin-bottom: 16px;
+}
+
+.header-top .logo {
+  flex: 1;
+  display: flex;
+  justify-content: center;
 }
 
 .collapse-btn {
@@ -154,6 +180,7 @@ body {
 .logo {
   display: flex;
   align-items: center;
+  justify-content: center;
   font-size: 16px;
   font-weight: 600;
   color: #0f172a;
@@ -180,6 +207,7 @@ body {
   gap: 2px;
   transition: opacity 0.3s ease;
   overflow: hidden;
+  align-items: center; /* Center both text elements */
 }
 
 .logo-tagline {
@@ -492,7 +520,7 @@ body {
 
 .welcome-icon {
   font-size: 40px;
-  margin-bottom: 16px;
+  margin-bottom: 4px;
   color: #0f172a;
   font-weight: 300;
   text-shadow: 0 2px 4px rgba(15, 23, 42, 0.1);
@@ -502,8 +530,17 @@ body {
   font-size: 22px;
   font-weight: 600;
   color: #0f172a;
-  margin-bottom: 8px;
+  margin-bottom: 4px;
   letter-spacing: -0.25px;
+}
+
+.welcome-tagline {
+  font-size: 10px;
+  color: #64748b;
+  font-weight: 400;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  margin-bottom: 8px;
 }
 
 .welcome-message p {
@@ -549,6 +586,32 @@ body {
   font-size: 20px;
   margin-right: 10px;
   flex-shrink: 0;
+}
+
+.feature-logo {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+}
+
+.sidebar-logo {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+}
+
+.sidebar-main-logo {
+  height: 120px;
+  width: auto;
+  object-fit: contain;
+  max-width: 240px;
+}
+
+.welcome-logo {
+  height: 180px;
+  width: auto;
+  object-fit: contain;
+  max-width: 400px;
 }
 
 .feature-text {
@@ -611,6 +674,18 @@ body {
   border-radius: 4px;
   font-weight: 500;
   color: #0f172a;
+}
+
+.clickable-settings {
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
+}
+
+.clickable-settings:hover {
+  background: rgba(15, 23, 42, 0.15);
+  border-color: rgba(15, 23, 42, 0.2);
+  transform: translateY(-1px);
 }
 
 .example-prompts {
@@ -1222,6 +1297,21 @@ body {
   display: flex;
   gap: 12px;
   margin-bottom: 16px;
+  align-items: flex-start;
+}
+
+.test-btn-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.api-usage-note {
+  color: #64748b;
+  font-size: 11px;
+  text-align: center;
+  margin: 0;
 }
 
 .save-btn, .test-btn {
