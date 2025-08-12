@@ -45,7 +45,7 @@ The debunkr.org Dashboard is a Chrome extension that helps you analyze suspiciou
 
 ### Step 3: Get Your API Key
 1. **Visit [Poe API Keys](https://poe.com/api_key)** to create your free API key
-2. **Copy your API key** (it starts with "poe-")
+2. **Copy your API key** (save it somewhere safe)
 
 ### Step 4: Set Up the Extension
 1. **Click the debunkr.org Dashboard icon** in your Chrome toolbar
@@ -126,7 +126,7 @@ When you're waiting for an analysis and switch to another tab, you'll see:
 
 **"Please make sure your Poe API key is configured"**
 - Go to Settings (⚙️) and add your API key from [poe.com/api_key](https://poe.com/api_key)
-- Make sure you copied the full key (starts with "poe-")
+- Make sure you copied the complete API key
 - Try the "Test Connection" button
 
 **Right-click menu doesn't show debunkr.org Dashboard**
