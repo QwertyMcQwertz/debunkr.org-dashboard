@@ -519,11 +519,13 @@ class ChatManager {
 
   async openSettings() {
     const modal = this.uiManager.getElement('settingsModal');
+    
+    // Toggle functionality - close if already open
     if (modal && modal.style.display !== 'none') {
       this.uiManager.closeSettingsModal();
       return;
     }
-
+    
     this.uiManager.openSettingsModal();
     const apiKeyInput = this.uiManager.getElement('apiKeyInput');
     try {
@@ -532,7 +534,8 @@ class ChatManager {
     } catch (error) {
       console.error('Error loading API key:', error);
     }
-
+    
+    // Settings modal event listeners - only set up once
     if (!this.settingsListenersSetup) {
       this.setupSettingsEventListeners();
       this.settingsListenersSetup = true;
@@ -546,6 +549,11 @@ class ChatManager {
     const toggleBtn = this.uiManager.getElement('toggleApiKey');
     const apiKeyInput = this.uiManager.getElement('apiKeyInput');
     const modal = this.uiManager.getElement('settingsModal');
+    
+    // Debug: Check if elements exist
+    console.log('Settings elements:', {
+      closeBtn, saveBtn, testBtn, toggleBtn, apiKeyInput, modal
+    });
 
     const closeModal = () => this.uiManager.closeSettingsModal();
     closeBtn.onclick = closeModal;
@@ -577,27 +585,41 @@ class ChatManager {
       }
     };
 
-    testBtn.onclick = async () => {
-      const apiKey = apiKeyInput.value.trim();
-      if (!apiKey) {
-        this.uiManager.showSettingsStatus('Please enter an API key first', 'error');
-        return;
-      }
-      try {
-        testBtn.disabled = true;
-        this.uiManager.showSettingsStatus('Testing connection...', 'loading');
-        const success = await this.poeClient.testConnection(apiKey);
-        this.uiManager.showSettingsStatus(
-          success ? 'Connection successful!' : 'Connection failed. Please check your API key.',
-          success ? 'success' : 'error'
-        );
-      } catch (error) {
-        console.error('Error testing connection:', error);
-        this.uiManager.showSettingsStatus(`Connection test failed: ${error.message}`, 'error');
-      } finally {
-        testBtn.disabled = false;
-      }
-    };
+    // Test connection
+    if (testBtn) {
+      testBtn.onclick = async () => {
+        console.log('Test connection button clicked');
+        const apiKey = apiKeyInput.value.trim();
+        
+        if (!apiKey) {
+          this.uiManager.showSettingsStatus('Please enter an API key first', 'error');
+          return;
+        }
+
+        try {
+          testBtn.disabled = true;
+          this.uiManager.showSettingsStatus('Testing connection...', 'loading');
+          console.log('About to test connection with API key');
+          
+          const success = await this.poeClient.testConnection(apiKey);
+          console.log('Test connection result:', success);
+          
+          if (success) {
+            this.uiManager.showSettingsStatus('Connection successful!', 'success');
+          } else {
+            this.uiManager.showSettingsStatus('Connection failed. Please check your API key.', 'error');
+          }
+        } catch (error) {
+          console.error('Error testing connection:', error);
+          this.uiManager.showSettingsStatus('Connection test failed: ' + error.message, 'error');
+        } finally {
+          testBtn.disabled = false;
+          console.log('Test button re-enabled');
+        }
+      };
+    } else {
+      console.error('Test button not found!');
+    }
   }
 }
 

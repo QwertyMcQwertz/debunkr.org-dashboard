@@ -562,8 +562,12 @@ class UIManager {
    */
   showSettingsStatus(message, type) {
     const status = this.getElement('settingsStatus');
+    console.log('Showing settings status:', message, type);
     status.textContent = message;
     status.className = `settings-status ${type}`;
+    // Force display in case CSS isn't working
+    status.style.display = 'block';
+    console.log('Status element after update:', status.className, status.textContent);
   }
 
   /**
