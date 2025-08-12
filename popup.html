@@ -25,48 +25,9 @@
       justify-content: center;
     }
     
-    .logo {
-      display: flex;
-      align-items: center;
-      font-size: 16px;
-      font-weight: 600;
-      color: #0f172a;
-      letter-spacing: 0.25px;
-      gap: 12px;
-    }
-
-    .logo-icon {
-      font-size: 20px;
-      width: 32px;
-      height: 32px;
-      background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-      border-radius: 8px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      box-shadow: 0 2px 4px rgba(15, 23, 42, 0.2);
-    }
-
-    .logo-text-container {
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-      align-items: center;
-    }
-
-    .logo-text {
-      font-size: 16px;
-      font-weight: 600;
-      color: #0f172a;
-      letter-spacing: 0.25px;
-    }
-    
-    .subtitle {
-      color: #64748b;
-      font-size: 10px;
-      font-weight: 400;
-      letter-spacing: 0.5px;
-      text-transform: uppercase;
+    .popup-logo {
+      width: 180px;
+      height: auto;
     }
     
     .open-chat-btn {
@@ -113,13 +74,7 @@
 </head>
 <body>
   <div class="header">
-    <div class="logo">
-      <div class="logo-icon">🛡️</div>
-      <div class="logo-text-container">
-        <div class="logo-text">debunkr Dashboard</div>
-        <div class="subtitle">Scroll with Scrutiny.</div>
-      </div>
-    </div>
+    <img src="debunkr_logo_half.svg" alt="debunkr logo" class="popup-logo">
   </div>
   
   <button class="open-chat-btn" id="openChat">
