@@ -94,13 +94,15 @@ class UIManager {
     if (!currentChat || currentChat.messages.length === 0) {
       // Don't modify the container if it already has the welcome message
       if (messagesContainer.querySelector('.welcome-message')) {
+        // But still set up listeners if they haven't been set up yet
+        this.setupWelcomeMessageListeners();
         return;
       }
       // If no welcome message exists, create it (this shouldn't happen in normal flow)
       messagesContainer.innerHTML = `
         <div class="welcome-message">
-          <div class="welcome-icon">🛡️</div>
-          <h2>Fight Misinformation with AI</h2>
+          <div class="welcome-icon"><img src="debunkr_logo_half.svg" alt="debunkr" class="welcome-logo"></div>
+          <h2>Scroll with Scrutiny.</h2>
           <p>Highlight suspicious text on any website, right-click, and let our egalitarian AI analyze it for bias, manipulation, and power structures.</p>
           
           <div class="welcome-features">
@@ -130,7 +132,7 @@ class UIManager {
           <div class="get-started-cta">
             <h3>Get Started:</h3>
             <div class="step-list">
-              <div class="step">1. Configure your OpenAI API key in <span class="settings-hint">⚙️ Settings</span></div>
+              <div class="step">1. Configure your Poe API key in <span class="settings-hint clickable-settings">⚙️ Settings</span></div>
               <div class="step">2. Highlight text on any webpage</div>
               <div class="step">3. Right-click → "debunkr" → "New Chat"</div>
             </div>
@@ -588,6 +590,30 @@ class UIManager {
     modal.style.display = 'none';
     status.className = 'settings-status';
     status.style.display = 'none';
+  }
+
+  /**
+   * Set up event listeners for welcome message elements
+   * Handles clickable elements in the welcome screen using event delegation
+   */
+  setupWelcomeMessageListeners() {
+    // Use event delegation to handle clicks on dynamically created elements
+    const messagesContainer = this.getElement('messagesContainer');
+    if (messagesContainer && !messagesContainer.hasAttribute('data-welcome-listeners')) {
+      messagesContainer.addEventListener('click', (e) => {
+        if (e.target.classList.contains('clickable-settings')) {
+          e.preventDefault();
+          e.stopPropagation();
+          // Trigger the same action as the settings button
+          const settingsBtn = this.getElement('settingsBtn');
+          if (settingsBtn) {
+            settingsBtn.click();
+          }
+        }
+      });
+      // Mark as having listener attached
+      messagesContainer.setAttribute('data-welcome-listeners', 'true');
+    }
   }
 
 }
