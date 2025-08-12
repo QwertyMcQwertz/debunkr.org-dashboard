@@ -18,6 +18,12 @@ class StorageManager {
   constructor() {
     /** @type {number|null} Timeout ID for debounced saves */
     this.saveTimeout = null;
+    /** @type {string|null} Cached decrypted API key to avoid repeated decryption */
+    this.cachedApiKey = null;
+    /** @type {number} Cache timestamp for API key */
+    this.cacheTimestamp = 0;
+    /** @type {number} Cache validity duration (5 minutes) */
+    this.cacheValidityMs = 5 * 60 * 1000;
   }
 
   /**
@@ -225,39 +231,82 @@ class StorageManager {
   }
 
   /**
-   * Securely save OpenAI API key with encryption
+   * Securely save API key with encryption
    * API keys are encrypted before storage to protect user credentials
-   * @param {string} apiKey - OpenAI API key to encrypt and store
+   * @param {string} apiKey - Poe API key to encrypt and store
    * @throws {Error} If encryption or storage operation fails
    */
-  async saveOpenAIApiKey(apiKey) {
+  async saveApiKey(apiKey) {
     try {
+      console.log('[StorageManager] Saving API key');
       const encryptedKey = await this.encryptData(apiKey);
       await chrome.storage.local.set({
-        encryptedOpenAIKey: encryptedKey
+        encryptedApiKey: encryptedKey
       });
+      
+      // Update cache
+      this.cachedApiKey = apiKey;
+      this.cacheTimestamp = Date.now();
+      console.log('[StorageManager] API key saved and cached');
     } catch (error) {
-      console.error('Error saving API key:', error);
+      console.error('[StorageManager] Error saving API key:', error);
+      // Clear cache on save error
+      this.cachedApiKey = null;
+      this.cacheTimestamp = 0;
       throw error;
     }
   }
 
   /**
-   * Retrieve and decrypt OpenAI API key
+   * Retrieve and decrypt API key
    * Returns null if no key is stored, allowing graceful handling
    * @returns {Promise<string|null>} Decrypted API key or null if not found
    * @throws {Error} If decryption fails (corrupted key or storage error)
    */
-  async getOpenAIApiKey() {
+  async getApiKey() {
     try {
-      const result = await chrome.storage.local.get(['encryptedOpenAIKey']);
-      if (result.encryptedOpenAIKey) {
-        return await this.decryptData(result.encryptedOpenAIKey);
+      // Check cache first
+      const now = Date.now();
+      if (this.cachedApiKey && (now - this.cacheTimestamp) < this.cacheValidityMs) {
+        console.log('[StorageManager] Returning cached API key');
+        return this.cachedApiKey;
       }
-      return null;
+
+      console.log('[StorageManager] Retrieving API key from storage');
+      
+      // First try the new key name, then fall back to old name for migration
+      const result = await chrome.storage.local.get(['encryptedApiKey', 'encryptedOpenAIKey']);
+      let decryptedKey = null;
+      
+      if (result.encryptedApiKey) {
+        decryptedKey = await this.decryptData(result.encryptedApiKey);
+      } else if (result.encryptedOpenAIKey) {
+        decryptedKey = await this.decryptData(result.encryptedOpenAIKey);
+      }
+      
+      // Cache the result
+      if (decryptedKey) {
+        this.cachedApiKey = decryptedKey;
+        this.cacheTimestamp = now;
+        console.log('[StorageManager] API key cached successfully');
+      }
+      
+      return decryptedKey;
     } catch (error) {
-      console.error('Error retrieving API key:', error);
+      console.error('[StorageManager] Error retrieving API key:', error);
+      // Clear cache on error
+      this.cachedApiKey = null;
+      this.cacheTimestamp = 0;
       throw error;
     }
+  }
+
+  // Legacy method names for backward compatibility
+  async saveOpenAIApiKey(apiKey) {
+    return this.saveApiKey(apiKey);
+  }
+
+  async getOpenAIApiKey() {
+    return this.getApiKey();
   }
 }

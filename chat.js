@@ -3,6 +3,8 @@ class ChatManager {
     this.pendingSource = null;
     /** @type {boolean} Flag to track if settings event listeners are set up */
     this.settingsListenersSetup = false;
+    /** @type {boolean} Flag to prevent concurrent API requests */
+    this.isApiRequestPending = false;
 
     // Initialize modular components
     /** @type {StorageManager} Handles encryption and persistence */
@@ -11,6 +13,11 @@ class ChatManager {
     this.poeClient = new PoeClient(this.storageManager);
     /** @type {UIManager} Controls DOM and user interface */
     this.uiManager = new UIManager();
+
+    // Set up cleanup on page unload
+    window.addEventListener('beforeunload', () => {
+      this.cleanup();
+    });
 
     // Begin initialization sequence
     this.initializeFromURL();
@@ -28,13 +35,59 @@ class ChatManager {
     const source = urlParams.get('source');
     const chatId = urlParams.get('chatId');
 
+    // Validate and sanitize action parameter
+    const validActions = ['newChat', 'selectChat', 'continueChat'];
+    this.urlAction = validActions.includes(action) ? action : null;
+
+    // Validate and sanitize text parameter
     if (text) {
-      this.pendingText = decodeURIComponent(text);
-      this.pendingSource = source ? decodeURIComponent(source) : null;
+      try {
+        const decodedText = decodeURIComponent(text);
+        // Limit text length to prevent DoS
+        if (decodedText.length > 10000) {
+          console.warn('Text parameter too long, truncating');
+          this.pendingText = decodedText.substring(0, 10000);
+        } else {
+          this.pendingText = decodedText;
+        }
+      } catch (error) {
+        console.warn('Invalid text parameter encoding:', error);
+        this.pendingText = null;
+      }
     }
 
-    this.urlAction = action;
-    this.targetChatId = chatId ? parseInt(chatId) : null;
+    // Validate and sanitize source URL parameter
+    if (source) {
+      try {
+        const decodedSource = decodeURIComponent(source);
+        // Validate URL format and protocol
+        const url = new URL(decodedSource);
+        if (['http:', 'https:'].includes(url.protocol)) {
+          this.pendingSource = decodedSource;
+        } else {
+          console.warn('Invalid source URL protocol:', url.protocol);
+          this.pendingSource = null;
+        }
+      } catch (error) {
+        console.warn('Invalid source URL parameter:', error);
+        this.pendingSource = null;
+      }
+    } else {
+      this.pendingSource = null;
+    }
+
+    // Validate and sanitize chatId parameter
+    if (chatId) {
+      const parsedChatId = parseInt(chatId, 10);
+      if (!isNaN(parsedChatId) && parsedChatId > 0 && parsedChatId < Number.MAX_SAFE_INTEGER) {
+        this.targetChatId = parsedChatId;
+      } else {
+        console.warn('Invalid chatId parameter:', chatId);
+        this.targetChatId = null;
+      }
+    } else {
+      this.targetChatId = null;
+    }
   }
 
   /**
@@ -70,6 +123,7 @@ class ChatManager {
       if (this.chats.size > 0) {
         this.storageManager.debouncedSave(this.chats, this.nextChatId, this.currentChatId);
       }
+
     } catch (error) {
       console.error('Error loading from storage:', error);
       this.createInitialChat();
@@ -137,7 +191,27 @@ class ChatManager {
         this.sendMessage();
       }
     });
+    messageInput.addEventListener('paste', (e) => {
+      this.uiManager.handlePasteImage(e);
+    });
     sendButton.addEventListener('click', () => this.sendMessage());
+
+    // Image upload functionality
+    const imageUploadBtn = this.uiManager.getElement('imageUploadBtn');
+    const imageFileInput = this.uiManager.getElement('imageFileInput');
+    
+    imageUploadBtn.addEventListener('click', () => {
+      imageFileInput.click();
+    });
+    
+    imageFileInput.addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (file && file.type.startsWith('image/')) {
+        await this.uiManager.addAttachedImage(file, file.name);
+      }
+      // Clear the input so the same file can be selected again
+      e.target.value = '';
+    });
   }
 
   /**
@@ -363,8 +437,17 @@ class ChatManager {
    * Send user message and trigger AI response
    */
   sendMessage() {
-    const content = this.uiManager.getFormattedMessageWithQuote();
-    if (!content) return;
+    // Prevent concurrent API requests
+    if (this.isApiRequestPending) {
+      console.log('API request already pending, skipping');
+      return;
+    }
+
+    const messageWithImages = this.uiManager.getMessageWithImages();
+    const content = messageWithImages.text;
+    const images = messageWithImages.images;
+    
+    if (!content && images.length === 0) return;
 
     const currentChat = this.chats.get(this.currentChatId);
     if (!currentChat) return;
@@ -372,18 +455,22 @@ class ChatManager {
     const userMessage = {
       id: Date.now(),
       type: 'user',
-      content: content,
-      timestamp: new Date().toISOString()
+      content: content || '[Image]',
+      timestamp: new Date().toISOString(),
+      images: images.length > 0 ? images : undefined
     };
     currentChat.messages.push(userMessage);
     currentChat.lastActivity = new Date().toISOString();
 
-    if (currentChat.title === 'New Chat' && content.length > 0) {
-      let titleText = content;
-      const quoteMatch = content.match(/^"(.+?)"\n\n(.+)?$/s);
+    if (currentChat.title === 'New Chat' && (content || images.length > 0)) {
+      let titleText = content || `Image message`;
+      const quoteMatch = content?.match(/^"(.+?)"\n\n(.+)?$/s);
       if (quoteMatch) titleText = quoteMatch[2] || quoteMatch[1];
       currentChat.title = titleText.length > 30 ? titleText.substring(0, 30) + '...' : titleText;
     }
+
+    // Store images for API call before clearing UI
+    this.pendingImages = images;
 
     this.uiManager.clearInput();
     this.uiManager.hideInputQuote();
@@ -398,7 +485,9 @@ class ChatManager {
    */
   async getAIResponse() {
     const currentChat = this.chats.get(this.currentChatId);
-    if (!currentChat) return;
+    if (!currentChat || this.isApiRequestPending) return;
+
+    this.isApiRequestPending = true;
 
     const apiKey = await this.storageManager.getOpenAIApiKey();
     if (!apiKey) {
@@ -426,7 +515,10 @@ class ChatManager {
     this.uiManager.renderMessages(currentChat);
 
     try {
-      const response = await this.poeClient.sendMessage(currentChat.messages);
+      const response = await this.poeClient.sendMessage(currentChat.messages, this.pendingImages || []);
+      // Clear pending images after successful API call
+      this.pendingImages = null;
+      
       const aiMessage = {
         id: Date.now(),
         type: 'assistant',
@@ -439,10 +531,13 @@ class ChatManager {
       currentChat.lastActivity = new Date().toISOString();
     } catch (error) {
       console.error('Error getting AI response:', error);
+      // Clear pending images on error
+      this.pendingImages = null;
+      
       const errorMessage = {
         id: Date.now(),
         type: 'assistant',
-        content: `Sorry, I encountered an error: ${error.message}\n\nPlease make sure your Poe API key is configured in Settings and try again.`,
+        content: this.getUserFriendlyErrorMessage(error),
         isError: true,
         timestamp: new Date().toISOString()
       };
@@ -450,11 +545,34 @@ class ChatManager {
       if (loadingIndex !== -1) currentChat.messages.splice(loadingIndex, 1, errorMessage);
       else currentChat.messages.push(errorMessage);
       currentChat.lastActivity = new Date().toISOString();
+    } finally {
+      this.isApiRequestPending = false;
     }
 
     this.uiManager.updateChatHistoryDisplay(this.chats, this.currentChatId);
     this.uiManager.renderMessages(currentChat);
     this.storageManager.debouncedSave(this.chats, this.nextChatId, this.currentChatId);
+  }
+
+  /**
+   * Get user-friendly error message based on error type
+   * @param {Error} error - The error object
+   * @returns {string} User-friendly error message
+   */
+  getUserFriendlyErrorMessage(error) {
+    if (error.message.includes('401') || error.message.includes('Invalid or expired API key')) {
+      return "Your API key appears to be invalid or expired. Please check your API key in Settings.";
+    } else if (error.message.includes('429') || error.message.includes('rate limit')) {
+      return "You've exceeded your API rate limit. Please wait a moment before trying again.";
+    } else if (error.message.includes('503') || error.message.includes('Service temporarily unavailable')) {
+      return "The service is temporarily unavailable. Please try again in a few minutes.";
+    } else if (error.message.includes('timeout') || error.message.includes('timed out')) {
+      return "The request timed out. Please check your internet connection and try again.";
+    } else if (error.message.includes('network') || error.message.includes('fetch')) {
+      return "Unable to connect to the service. Please check your internet connection.";
+    } else {
+      return `Something went wrong while processing your request.\n\nPlease make sure your Poe API key is configured in Settings and try again.`;
+    }
   }
 
   renameChat(chatId) {
@@ -621,6 +739,26 @@ class ChatManager {
       console.error('Test button not found!');
     }
   }
+
+  /**
+   * Clean up resources when the application is closing
+   */
+  cleanup() {
+    console.log('ChatManager cleanup initiated');
+    
+    // Clean up UI manager
+    if (this.uiManager && this.uiManager.cleanup) {
+      this.uiManager.cleanup();
+    }
+    
+    // Force save any pending data
+    if (this.storageManager && this.chats) {
+      this.storageManager.forceSave(this.chats, this.nextChatId, this.currentChatId);
+    }
+    
+    console.log('ChatManager cleanup completed');
+  }
+
 }
 
 document.addEventListener('DOMContentLoaded', () => {

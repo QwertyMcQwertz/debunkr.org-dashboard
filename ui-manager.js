@@ -23,6 +23,12 @@ class UIManager {
     this.cachedElements = {};
     /** @type {Object|null} Currently active quote block data */
     this.currentQuote = null;
+    /** @type {Array<Object>} Currently attached images */
+    this.attachedImages = [];
+    /** @type {Set<Function>} Track event listeners for cleanup */
+    this.eventListeners = new Set();
+    /** @type {WeakMap<Element, Function>} Track listeners per element */
+    this.elementListeners = new WeakMap();
   }
 
   /**
@@ -58,6 +64,18 @@ class UIManager {
    * @returns {string} HTML-formatted message content
    */
   formatMessage(content) {
+    // Input validation and length limit
+    if (typeof content !== 'string') {
+      console.warn('Invalid content type for formatMessage:', typeof content);
+      return '';
+    }
+    
+    // Limit content length to prevent DoS
+    if (content.length > 50000) {
+      console.warn('Content too long, truncating');
+      content = content.substring(0, 50000) + '... [truncated]';
+    }
+    
     // Sanitize and format message content with quote block support
     const sanitized = this.sanitizeInput(content);
     
@@ -68,12 +86,13 @@ class UIManager {
     if (match) {
       const [, quotedText, , additionalContext] = match;
       
-      // Replace the quoted portion with styled quote block
+      // Double sanitize quoted content for extra security
       const quotedTextSanitized = this.sanitizeInput(quotedText);
       let quoteBlock = `<div class="quote-block">${quotedTextSanitized.replace(/\n/g, '<br>')}</div>`;
       
       if (additionalContext) {
-        quoteBlock += '<br>' + this.sanitizeInput(additionalContext).replace(/\n/g, '<br>');
+        const contextSanitized = this.sanitizeInput(additionalContext);
+        quoteBlock += '<br>' + contextSanitized.replace(/\n/g, '<br>');
       }
       
       return quoteBlock;
@@ -149,7 +168,17 @@ class UIManager {
         </div>
         <div class="message-container">
           <div class="message-content">
-            ${message.isLoading ? `<div class="loading-dots">${message.content}</div>` : this.formatMessage(message.content)}
+            ${message.images && message.images.length > 0 ? `
+              <div class="message-images">
+                ${message.images.map(image => `
+                  <div class="message-image-item">
+                    <img src="${image.data}" alt="${image.fileName}" class="message-image-preview">
+                  </div>
+                `).join('')}
+              </div>
+            ` : ''}
+            ${message.isLoading ? `<div class="loading-dots">${message.content}</div>` : 
+              (message.content === '[Image]' && message.images && message.images.length > 0) ? '' : this.formatMessage(message.content)}
           </div>
           ${!message.isLoading ? `
             <div class="message-actions">
@@ -171,6 +200,9 @@ class UIManager {
     // Add copy button event listeners
     this.setupCopyButtons(currentChat);
     
+    // Add image click listeners
+    this.setupImageViewers();
+    
     this.scrollToBottom();
   }
 
@@ -180,12 +212,22 @@ class UIManager {
    * @param {Object} currentChat - Chat object for accessing message data
    */
   setupCopyButtons(currentChat) {
-    const copyButtons = document.querySelectorAll('.copy-message-btn');
+    const copyButtons = document.querySelectorAll('.copy-message-btn:not([data-listener-attached])');
     copyButtons.forEach(button => {
-      button.addEventListener('click', (e) => {
+      const handler = (e) => {
         e.stopPropagation();
         const messageId = button.dataset.messageId;
         this.copyMessageToClipboard(messageId, currentChat, button);
+      };
+      
+      button.addEventListener('click', handler);
+      button.setAttribute('data-listener-attached', 'true');
+      
+      // Track listener for cleanup
+      this.elementListeners.set(button, handler);
+      this.eventListeners.add(() => {
+        button.removeEventListener('click', handler);
+        button.removeAttribute('data-listener-attached');
       });
     });
   }
@@ -396,11 +438,15 @@ class UIManager {
     this.currentQuote = { text, sourceUrl };
     const container = this.getElement('inputQuoteContainer');
     
+    // Sanitize both text and sourceUrl
+    const sanitizedText = this.sanitizeInput(text);
+    const sanitizedSourceUrl = sourceUrl ? this.sanitizeInput(sourceUrl) : '';
+    
     container.innerHTML = `
       <div class="input-quote-block" style="position: relative;">
-        ${this.sanitizeInput(text)}
+        ${sanitizedText}
         <button class="input-quote-remove" id="removeQuote">×</button>
-        ${sourceUrl ? `<div class="quote-source" style="margin-top: 6px;">From: ${sourceUrl}</div>` : ''}
+        ${sanitizedSourceUrl ? `<div class="quote-source" style="margin-top: 6px;">From: ${sanitizedSourceUrl}</div>` : ''}
       </div>
     `;
     
@@ -516,14 +562,14 @@ class UIManager {
 
   /**
    * Update send button enabled/disabled state
-   * Button is enabled when there's text input OR an active quote block
-   * Prevents sending empty messages while allowing quote-only messages
+   * Button is enabled when there's text input OR an active quote block OR attached images
+   * Prevents sending empty messages while allowing quote-only and image-only messages
    */
   updateSendButton() {
     const messageInput = this.getElement('messageInput');
     const sendButton = this.getElement('sendButton');
-    // Enable if there's text input OR a quote block
-    sendButton.disabled = !messageInput.value.trim() && !this.currentQuote;
+    // Enable if there's text input OR a quote block OR attached images
+    sendButton.disabled = !messageInput.value.trim() && !this.currentQuote && this.attachedImages.length === 0;
   }
 
   /**
@@ -545,11 +591,12 @@ class UIManager {
 
   /**
    * Clear message input and reset UI state
-   * Resets textarea height and updates send button state
+   * Resets textarea height, clears images, and updates send button state
    */
   clearInput() {
     const messageInput = this.getElement('messageInput');
     messageInput.value = '';
+    this.clearAttachedImages();
     this.adjustTextareaHeight();
     this.updateSendButton();
   }
@@ -600,20 +647,389 @@ class UIManager {
     // Use event delegation to handle clicks on dynamically created elements
     const messagesContainer = this.getElement('messagesContainer');
     if (messagesContainer && !messagesContainer.hasAttribute('data-welcome-listeners')) {
-      messagesContainer.addEventListener('click', (e) => {
+      const welcomeClickHandler = (e) => {
         if (e.target.classList.contains('clickable-settings')) {
           e.preventDefault();
           e.stopPropagation();
+          console.log('[UIManager] Welcome settings link clicked');
           // Trigger the same action as the settings button
           const settingsBtn = this.getElement('settingsBtn');
           if (settingsBtn) {
             settingsBtn.click();
           }
         }
+      };
+      
+      messagesContainer.addEventListener('click', welcomeClickHandler);
+      
+      // Track listener for cleanup
+      this.elementListeners.set(messagesContainer, welcomeClickHandler);
+      this.eventListeners.add(() => {
+        messagesContainer.removeEventListener('click', welcomeClickHandler);
+        messagesContainer.removeAttribute('data-welcome-listeners');
       });
+      
       // Mark as having listener attached
       messagesContainer.setAttribute('data-welcome-listeners', 'true');
+      console.log('[UIManager] Welcome message listeners set up');
     }
+  }
+
+  /**
+   * Set up event listeners for image previews
+   * Allows clicking on message images to view them full-size
+   */
+  setupImageViewers() {
+    const imageElements = document.querySelectorAll('.message-image-preview:not([data-listener-attached])');
+    imageElements.forEach(img => {
+      const handler = (e) => {
+        e.stopPropagation();
+        this.showImageModal(img.src, img.alt);
+      };
+      
+      img.addEventListener('click', handler);
+      img.setAttribute('data-listener-attached', 'true');
+      
+      // Track listener for cleanup
+      this.elementListeners.set(img, handler);
+      this.eventListeners.add(() => {
+        img.removeEventListener('click', handler);
+        img.removeAttribute('data-listener-attached');
+      });
+    });
+  }
+
+  /**
+   * Show image in a full-size modal
+   * @param {string} imageSrc - Source URL of the image
+   * @param {string} imageAlt - Alt text for the image
+   */
+  showImageModal(imageSrc, imageAlt) {
+    // Create modal overlay
+    const modalOverlay = document.createElement('div');
+    modalOverlay.className = 'image-modal-overlay';
+    modalOverlay.innerHTML = `
+      <div class="image-modal-content">
+        <button class="image-modal-close">×</button>
+        <img src="${imageSrc}" alt="${imageAlt}" class="image-modal-image">
+        <div class="image-modal-caption">${imageAlt}</div>
+      </div>
+    `;
+
+    // Add to document
+    document.body.appendChild(modalOverlay);
+
+    // Add event listeners
+    const closeBtn = modalOverlay.querySelector('.image-modal-close');
+    closeBtn.addEventListener('click', () => {
+      document.body.removeChild(modalOverlay);
+    });
+
+    modalOverlay.addEventListener('click', (e) => {
+      if (e.target === modalOverlay) {
+        document.body.removeChild(modalOverlay);
+      }
+    });
+
+    // Close on Escape key
+    const handleEscape = (e) => {
+      if (e.key === 'Escape') {
+        document.body.removeChild(modalOverlay);
+        document.removeEventListener('keydown', handleEscape);
+      }
+    };
+    document.addEventListener('keydown', handleEscape);
+  }
+
+  /**
+   * Add image to the attached images list and show preview
+   * @param {File|string} imageData - Image file or base64 data
+   * @param {string} fileName - Name of the image file
+   */
+  async addAttachedImage(imageData, fileName) {
+    const imageId = Date.now() + Math.random().toString(36).substr(2, 9);
+    
+    try {
+      if (imageData instanceof File) {
+        console.log(`[UIManager] Processing file upload: ${fileName} (${imageData.size} bytes)`);
+        
+        // Validate file size (max 10MB)
+        if (imageData.size > 10 * 1024 * 1024) {
+          this.showImageError(`Image "${fileName}" is too large. Maximum size is 10MB.`);
+          return false;
+        }
+
+        // Validate file type more strictly
+        const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+        if (!allowedTypes.includes(imageData.type)) {
+          this.showImageError(`"${fileName}" format not supported. Use JPEG, PNG, GIF, or WebP.`);
+          return false;
+        }
+
+        // Compress image if it's large
+        const compressedData = await this.compressImageIfNeeded(imageData);
+        
+        // Verify compression didn't fail
+        if (!compressedData || !compressedData.startsWith('data:image/')) {
+          this.showImageError(`Failed to process "${fileName}". Please try a different image.`);
+          return false;
+        }
+        
+        this.attachedImages.push({
+          id: imageId,
+          data: compressedData,
+          fileName: fileName,
+          type: imageData.type,
+          originalSize: imageData.size
+        });
+        
+        console.log(`[UIManager] Successfully added image: ${fileName}`);
+        this.updateImagePreview();
+        this.updateSendButton();
+        return true;
+        
+      } else {
+        // Handle base64 data (from paste)
+        if (typeof imageData !== 'string' || !imageData.startsWith('data:image/')) {
+          this.showImageError('Invalid image data provided.');
+          return false;
+        }
+
+        // Estimate size from base64 string
+        const estimatedSize = imageData.length * 0.75; // Base64 is ~33% larger than binary
+        if (estimatedSize > 10 * 1024 * 1024) {
+          this.showImageError(`Pasted image is too large. Maximum size is 10MB.`);
+          return false;
+        }
+
+        this.attachedImages.push({
+          id: imageId,
+          data: imageData,
+          fileName: fileName,
+          type: 'image/png' // Default for pasted images
+        });
+        
+        console.log(`[UIManager] Successfully added pasted image: ${fileName}`);
+        this.updateImagePreview();
+        this.updateSendButton();
+        return true;
+      }
+    } catch (error) {
+      console.error('[UIManager] Error processing image:', error);
+      this.showImageError(`Failed to process "${fileName}": ${error.message}`);
+      return false;
+    }
+  }
+
+  /**
+   * Compress image if it's larger than 2MB or dimensions are too large
+   * @param {File} file - Image file to potentially compress
+   * @returns {Promise<string>} Compressed image data as base64
+   */
+  async compressImageIfNeeded(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          try {
+            // Check if compression is needed
+            const needsCompression = file.size > 2 * 1024 * 1024 || // > 2MB
+                                   img.width > 1920 || img.height > 1920; // Large dimensions
+
+            if (!needsCompression) {
+              resolve(e.target.result);
+              return;
+            }
+
+            // Calculate new dimensions maintaining aspect ratio
+            const maxDimension = 1920;
+            let { width, height } = img;
+            
+            if (width > height && width > maxDimension) {
+              height = (height * maxDimension) / width;
+              width = maxDimension;
+            } else if (height > maxDimension) {
+              width = (width * maxDimension) / height;
+              height = maxDimension;
+            }
+
+            // Create canvas and compress
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = width;
+            canvas.height = height;
+
+            ctx.drawImage(img, 0, 0, width, height);
+            
+            // Compress with quality based on original size
+            const quality = file.size > 5 * 1024 * 1024 ? 0.7 : 0.8;
+            const compressedData = canvas.toDataURL(file.type, quality);
+            
+            console.log(`Image compressed: ${(file.size / 1024).toFixed(1)}KB → ${(compressedData.length * 0.75 / 1024).toFixed(1)}KB`);
+            resolve(compressedData);
+          } catch (error) {
+            reject(error);
+          }
+        };
+        img.onerror = () => reject(new Error('Failed to load image for compression'));
+        img.src = e.target.result;
+      };
+      reader.onerror = () => reject(new Error('Failed to read image file'));
+      reader.readAsDataURL(file);
+    });
+  }
+
+  /**
+   * Show image error message to user
+   * @param {string} message - Error message to display
+   */
+  showImageError(message) {
+    console.error('Image error:', message);
+    
+    // Create temporary error notification
+    const errorDiv = document.createElement('div');
+    errorDiv.className = 'image-error-notification';
+    errorDiv.textContent = message;
+    errorDiv.style.cssText = `
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: #f44336;
+      color: white;
+      padding: 12px 16px;
+      border-radius: 4px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+      z-index: 10000;
+      max-width: 300px;
+      animation: slideIn 0.3s ease-out;
+    `;
+
+    document.body.appendChild(errorDiv);
+
+    // Remove after 5 seconds
+    setTimeout(() => {
+      if (errorDiv.parentNode) {
+        errorDiv.parentNode.removeChild(errorDiv);
+      }
+    }, 5000);
+  }
+
+  /**
+   * Remove image from attached images list
+   * @param {string} imageId - ID of image to remove
+   */
+  removeAttachedImage(imageId) {
+    this.attachedImages = this.attachedImages.filter(img => img.id !== imageId);
+    this.updateImagePreview();
+    this.updateSendButton();
+  }
+
+  /**
+   * Update the image preview display
+   */
+  updateImagePreview() {
+    const container = this.getElement('imagePreviewContainer');
+    
+    if (this.attachedImages.length === 0) {
+      container.style.display = 'none';
+      container.innerHTML = '';
+      return;
+    }
+
+    const previewHtml = this.attachedImages.map(image => `
+      <div class="image-preview-item">
+        <img src="${image.data}" alt="${image.fileName}" class="image-preview">
+        <button class="image-remove-btn" data-image-id="${image.id}">×</button>
+      </div>
+    `).join('');
+
+    container.innerHTML = previewHtml;
+    container.style.display = 'block';
+
+    // Add remove button event listeners
+    container.querySelectorAll('.image-remove-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const imageId = btn.dataset.imageId;
+        this.removeAttachedImage(imageId);
+      });
+    });
+  }
+
+  /**
+   * Clear all attached images
+   */
+  clearAttachedImages() {
+    this.attachedImages = [];
+    this.updateImagePreview();
+    this.updateSendButton();
+  }
+
+  /**
+   * Get formatted message with images for sending
+   * @returns {Object} Object containing text and images
+   */
+  getMessageWithImages() {
+    const messageInput = this.getElement('messageInput');
+    const text = this.getFormattedMessageWithQuote();
+    
+    return {
+      text: text,
+      images: this.attachedImages.map(img => ({
+        data: img.data,
+        type: img.type,
+        fileName: img.fileName
+      }))
+    };
+  }
+
+  /**
+   * Handle paste events for image uploads
+   * @param {ClipboardEvent} event - The paste event
+   */
+  async handlePasteImage(event) {
+    const items = event.clipboardData?.items;
+    if (!items) return;
+
+    for (const item of items) {
+      if (item.type.startsWith('image/')) {
+        event.preventDefault();
+        const file = item.getAsFile();
+        if (file) {
+          const fileName = `pasted-image-${Date.now()}.${item.type.split('/')[1]}`;
+          await this.addAttachedImage(file, fileName);
+        }
+        break;
+      }
+    }
+  }
+
+  /**
+   * Clean up all event listeners and resources
+   * Call this method when the UI manager is no longer needed
+   */
+  cleanup() {
+    // Remove all tracked event listeners
+    for (const cleanup of this.eventListeners) {
+      try {
+        cleanup();
+      } catch (error) {
+        console.warn('Error during listener cleanup:', error);
+      }
+    }
+    
+    this.eventListeners.clear();
+    this.elementListeners = new WeakMap();
+    
+    // Clear cached elements
+    this.cachedElements = {};
+    
+    // Clear attached images to free memory
+    this.attachedImages = [];
+    
+    console.log('UIManager cleanup completed');
   }
 
 }
