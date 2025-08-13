@@ -475,6 +475,11 @@ class UIManager {
     // Reset placeholder
     const messageInput = this.getElement('messageInput');
     messageInput.placeholder = 'Ask me to analyze any information, fact-check claims, or verify sources...';
+    
+    // Clear URL parameters to prevent quote restoration on refresh
+    if (window.location.search) {
+      window.history.replaceState({}, '', window.location.pathname);
+    }
   }
 
   /**
