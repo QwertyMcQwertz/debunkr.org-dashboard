@@ -1,12 +1,13 @@
 /**
  * Storage and encryption management module
- * Handles all data persistence, encryption/decryption, and Chrome storage operations
+ * Handles all data persistence, encryption/decryption, and cross-browser storage operations
  * 
  * Features:
  * - AES-GCM encryption for sensitive chat data
  * - Debounced saves to prevent excessive storage operations
  * - Secure API key management
  * - Automatic encryption key generation and storage
+ * - Cross-browser compatibility (Chrome & Firefox)
  * 
  * @class StorageManager
  */
@@ -24,10 +25,59 @@ class StorageManager {
     this.cacheTimestamp = 0;
     /** @type {number} Cache validity duration (5 minutes) */
     this.cacheValidityMs = 5 * 60 * 1000;
+    
+    // Cross-browser storage API
+    this.storage = this._getBrowserStorage();
   }
 
   /**
-   * Save chat data to Chrome storage with encryption
+   * Get cross-browser compatible storage API
+   * @private
+   * @returns {Object} Storage API object
+   */
+  _getBrowserStorage() {
+    if (typeof browser !== 'undefined' && browser.storage) {
+      return browser.storage;
+    } else if (typeof chrome !== 'undefined' && chrome.storage) {
+      // Wrap Chrome storage API with promises for consistency
+      return {
+        local: {
+          get: (keys) => new Promise((resolve, reject) => {
+            this.storage.local.get(keys, (result) => {
+              if (chrome.runtime.lastError) {
+                reject(chrome.runtime.lastError);
+              } else {
+                resolve(result);
+              }
+            });
+          }),
+          set: (items) => new Promise((resolve, reject) => {
+            this.storage.local.set(items, () => {
+              if (chrome.runtime.lastError) {
+                reject(chrome.runtime.lastError);
+              } else {
+                resolve();
+              }
+            });
+          }),
+          remove: (keys) => new Promise((resolve, reject) => {
+            this.storage.local.remove(keys, () => {
+              if (chrome.runtime.lastError) {
+                reject(chrome.runtime.lastError);
+              } else {
+                resolve();
+              }
+            });
+          })
+        }
+      };
+    } else {
+      throw new Error('No storage API available');
+    }
+  }
+
+  /**
+   * Save chat data to browser storage with encryption
    * @param {Map} chats - Map of chat objects keyed by chat ID
    * @param {number} nextChatId - Next available chat ID
    * @param {number|null} currentChatId - Currently active chat ID
@@ -66,7 +116,7 @@ class StorageManager {
         };
       }
       
-      await chrome.storage.local.set({
+      await this.storage.local.set({
         encryptedChats: encryptedChats,
         chatTitles: chatTitles,
         nextChatId: nextChatId,
@@ -119,7 +169,7 @@ class StorageManager {
    */
   async cleanupChatTitles(validChats) {
     try {
-      const result = await chrome.storage.local.get(['chatTitles']);
+      const result = await this.storage.local.get(['chatTitles']);
       if (!result.chatTitles) {
         return;
       }
@@ -145,7 +195,7 @@ class StorageManager {
         }
         
         // Save cleaned chat titles
-        await chrome.storage.local.set({ chatTitles: cleanedChatTitles });
+        await this.storage.local.set({ chatTitles: cleanedChatTitles });
         console.log(`[StorageManager] Chat titles cleanup completed`);
       }
     } catch (error) {
@@ -160,7 +210,7 @@ class StorageManager {
    */
   async loadData() {
     try {
-      const result = await chrome.storage.local.get(['encryptedChats', 'nextChatId', 'currentChatId']);
+      const result = await this.storage.local.get(['encryptedChats', 'nextChatId', 'currentChatId']);
       
       let chats = new Map();
       if (result.encryptedChats) {
@@ -302,7 +352,7 @@ class StorageManager {
    */
   async getOrCreateEncryptionKey() {
     // Check if key already exists in storage
-    const result = await chrome.storage.local.get(['encryptionKey']);
+    const result = await this.storage.local.get(['encryptionKey']);
     
     if (result.encryptionKey) {
       return await crypto.subtle.importKey(
@@ -323,7 +373,7 @@ class StorageManager {
     
     // Export and store the key
     const exportedKey = await crypto.subtle.exportKey('raw', key);
-    await chrome.storage.local.set({
+    await this.storage.local.set({
       encryptionKey: Array.from(new Uint8Array(exportedKey))
     });
     
@@ -340,7 +390,7 @@ class StorageManager {
     try {
       console.log('[StorageManager] Saving API key');
       const encryptedKey = await this.encryptData(apiKey);
-      await chrome.storage.local.set({
+      await this.storage.local.set({
         encryptedApiKey: encryptedKey
       });
       
@@ -375,7 +425,7 @@ class StorageManager {
       console.log('[StorageManager] Retrieving API key from storage');
       
       // First try the new key name, then fall back to old name for migration
-      const result = await chrome.storage.local.get(['encryptedApiKey', 'encryptedOpenAIKey']);
+      const result = await this.storage.local.get(['encryptedApiKey', 'encryptedOpenAIKey']);
       let decryptedKey = null;
       
       if (result.encryptedApiKey) {
@@ -409,7 +459,7 @@ class StorageManager {
   async clearAllChatData() {
     try {
       console.warn('[StorageManager] Clearing all chat data due to corruption');
-      await chrome.storage.local.remove(['encryptedChats', 'chatTitles', 'nextChatId', 'currentChatId']);
+      await this.storage.local.remove(['encryptedChats', 'chatTitles', 'nextChatId', 'currentChatId']);
       console.log('[StorageManager] Chat data cleared successfully');
     } catch (error) {
       console.error('[StorageManager] Error clearing chat data:', error);

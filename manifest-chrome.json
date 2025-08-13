@@ -43,16 +43,21 @@
         "chat.html", 
         "chat.css", 
         "icons/*",
-        "assets/*",
-        "src/*.js"
+        "debunkr_logo.svg",
+        "debunkr_logo_half.svg",
+        "event-bus.js",
+        "models.js",
+        "icon-manager.js",
+        "storage-manager.js", 
+        "poe-client.js", 
+        "ui-manager.js",
+        "routing-controller.js",
+        "chat-controller.js",
+        "message-controller.js",
+        "settings-controller.js",
+        "chat-manager-refactored.js"
       ],
       "matches": ["<all_urls>"]
     }
-  ],
-  "browser_specific_settings": {
-    "gecko": {
-      "id": "debunkr-dashboard@debunkr.org",
-      "strict_min_version": "109.0"
-    }
-  }
+  ]
 }

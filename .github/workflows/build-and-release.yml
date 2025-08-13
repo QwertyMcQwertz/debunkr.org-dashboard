@@ -1,0 +1,127 @@
+name: Build and Release Extension
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to build (e.g., v2.1.0)'
+        required: false
+        default: 'latest'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up environment
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y zip
+        
+    - name: Make build scripts executable
+      run: |
+        chmod +x build.sh
+        chmod +x dev-build.sh
+        
+    - name: Build extension packages
+      run: ./build.sh
+      
+    - name: Verify packages
+      run: |
+        echo "📦 Built packages:"
+        ls -la packages/
+        echo ""
+        echo "📋 Package details:"
+        du -h packages/*
+        echo ""
+        echo "🔍 Chrome manifest check:"
+        unzip -p packages/debunkr-dashboard-chrome.zip manifest.json | grep -A3 '"background"' || true
+        echo ""
+        echo "🔍 Firefox manifest check:"
+        unzip -p packages/debunkr-dashboard-firefox.xpi manifest.json | grep -A3 '"background"' || true
+        
+    - name: Upload Chrome package
+      uses: actions/upload-artifact@v4
+      with:
+        name: debunkr-dashboard-chrome
+        path: packages/debunkr-dashboard-chrome.zip
+        retention-days: 90
+        
+    - name: Upload Firefox package
+      uses: actions/upload-artifact@v4
+      with:
+        name: debunkr-dashboard-firefox
+        path: packages/debunkr-dashboard-firefox.xpi
+        retention-days: 90
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Download Chrome package
+      uses: actions/download-artifact@v4
+      with:
+        name: debunkr-dashboard-chrome
+        path: ./packages/
+        
+    - name: Download Firefox package
+      uses: actions/download-artifact@v4
+      with:
+        name: debunkr-dashboard-firefox
+        path: ./packages/
+        
+    - name: Get version from tag
+      id: version
+      run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+      
+    - name: Create Release
+      uses: softprops/action-gh-release@v2
+      with:
+        name: Release ${{ steps.version.outputs.VERSION }}
+        body: |
+          ## 🌐 debunkr.org Dashboard ${{ steps.version.outputs.VERSION }}
+          
+          Cross-browser compatible extension for AI-powered content analysis.
+          
+          ### 📦 Downloads
+          
+          **🦊 Firefox Users:** Download `debunkr-dashboard-firefox.xpi`
+          - Drag and drop into Firefox, or
+          - Go to `about:debugging` → Load Temporary Add-on
+          
+          **🌐 Chrome/Edge/Brave Users:** Download `debunkr-dashboard-chrome.zip`
+          - Extract the ZIP file
+          - Go to `chrome://extensions/` 
+          - Enable Developer mode
+          - Click "Load unpacked" and select the extracted folder
+          
+          ### ✨ Features
+          - Cross-browser compatibility (Chrome, Firefox, Edge, Brave, Opera)
+          - AI-powered content analysis
+          - Right-click context menu integration
+          - Chat-style conversation interface
+          - Local data storage with encryption
+          
+          ### 🔧 Installation Instructions
+          See the [README.md](https://github.com/QwertyMcQwertz/debunkr.org-dashboard/blob/main/README.md) for detailed installation instructions.
+          
+          ---
+          
+          **Compatible with:** Chrome 88+, Firefox 109+, Edge, Brave, Opera
+        files: |
+          packages/debunkr-dashboard-chrome.zip
+          packages/debunkr-dashboard-firefox.xpi
+        draft: false
+        prerelease: false
+        token: ${{ secrets.GITHUB_TOKEN }}
