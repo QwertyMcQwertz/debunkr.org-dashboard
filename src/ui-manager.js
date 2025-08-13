@@ -120,7 +120,7 @@ class UIManager {
       // If no welcome message exists, create it (this shouldn't happen in normal flow)
       messagesContainer.innerHTML = `
         <div class="welcome-message">
-          <div class="welcome-icon"><img src="debunkr_logo_half.svg" alt="debunkr" class="welcome-logo"></div>
+          <div class="welcome-icon"><img src="assets/debunkr_logo_half.svg" alt="debunkr" class="welcome-logo"></div>
           <h2>Scroll with Scrutiny.</h2>
           <p>Highlight suspicious text on any website, right-click, and let our egalitarian AI analyze it for bias, manipulation, and power structures.</p>
           

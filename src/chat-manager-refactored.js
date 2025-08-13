@@ -450,10 +450,10 @@ class ChatApplication {
     
     if (collapsed) {
       sidebar.classList.add('collapsed');
-      logoImg.src = 'debunkr_logo_half.svg';
+      logoImg.src = 'assets/debunkr_logo_half.svg';
     } else {
       sidebar.classList.remove('collapsed');
-      logoImg.src = 'debunkr_logo.svg';
+      logoImg.src = 'assets/debunkr_logo.svg';
     }
     
     localStorage.setItem('sidebarCollapsed', collapsed.toString());
