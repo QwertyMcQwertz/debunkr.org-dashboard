@@ -2,7 +2,11 @@
 
 **Scroll with Scrutiny.**
 
-The debunkr.org Dashboard is a Chrome extension that helps you analyze suspicious content on the web using AI-powered analysis. Simply highlight text on any website, right-click, and let our egalitarian AI analyze it for bias, manipulation, and power structures.
+The debunkr.org Dashboard is a browser extension that helps you analyze suspicious content on the web using AI-powered analysis. Simply highlight text on any website, right-click, and let our egalitarian AI analyze it for bias, manipulation, and power structures.
+
+**Compatible with:** Chrome, Edge, Brave, Opera, and other Chromium-based browsers
+
+> **Note:** This extension uses Manifest V3 and is optimized for Chromium-based browsers. Firefox compatibility would require additional modifications for Manifest V2.
 
 ## ✨ What You Can Do
 
@@ -37,18 +41,38 @@ The debunkr.org Dashboard is a Chrome extension that helps you analyze suspiciou
 1. **Download** or clone this repository to your computer
 2. **Unzip the folder** if you downloaded a zip file
 
-### Step 2: Install in Chrome
+### Step 2: Install in Your Browser
+
+**For Chrome:**
 1. **Open Chrome** and go to `chrome://extensions/`
 2. **Turn on "Developer mode"** using the toggle in the top-right corner
-3. **Click "Load unpacked"** and select the `misinformation-manager` folder you downloaded
+3. **Click "Load unpacked"** and select the `debunkr.org-dashboard` folder you downloaded
 4. **Pin the extension** to your toolbar by clicking the puzzle piece icon and pinning "debunkr.org Dashboard"
+
+**For Edge:**
+1. **Open Edge** and go to `edge://extensions/`
+2. **Turn on "Developer mode"** using the toggle on the left sidebar
+3. **Click "Load unpacked"** and select the `debunkr.org-dashboard` folder you downloaded
+4. **Pin the extension** to your toolbar from the extensions menu
+
+**For Brave:**
+1. **Open Brave** and go to `brave://extensions/`
+2. **Turn on "Developer mode"** using the toggle in the top-right corner
+3. **Click "Load unpacked"** and select the `debunkr.org-dashboard` folder you downloaded
+4. **Pin the extension** to your toolbar by clicking the puzzle piece icon
+
+**For Opera:**
+1. **Open Opera** and go to `opera://extensions/`
+2. **Turn on "Developer mode"** using the toggle in the top-right corner
+3. **Click "Load unpacked"** and select the `debunkr.org-dashboard` folder you downloaded
+4. **Pin the extension** to your toolbar from the extensions menu
 
 ### Step 3: Get Your API Key
 1. **Visit [Poe API Keys](https://poe.com/api_key)** to create your free API key
 2. **Copy your API key** (save it somewhere safe)
 
 ### Step 4: Set Up the Extension
-1. **Click the debunkr.org Dashboard icon** in your Chrome toolbar
+1. **Click the debunkr.org Dashboard icon** in your browser toolbar
 2. **Click the ⚙️ Settings button** (you'll see this in the welcome message)
 3. **Paste your API key** and click "Save"
 4. **Click "Test Connection"** to make sure everything works
@@ -132,7 +156,7 @@ When you're waiting for an analysis and switch to another tab, you'll see:
 **Right-click menu doesn't show debunkr.org Dashboard**
 - Make sure you **selected text first** before right-clicking
 - Try refreshing the webpage
-- Check that the extension is enabled at `chrome://extensions/`
+- Check that the extension is enabled in your browser's extensions page
 
 **Analysis takes a long time or times out**
 - Large images or very long text can take longer to process
@@ -152,7 +176,7 @@ When you're waiting for an analysis and switch to another tab, you'll see:
 ### 💬 Get Support
 If you're still having trouble, you can:
 - Check the browser console for error messages (F12 → Console tab)
-- Try reloading the extension at `chrome://extensions/`
+- Try reloading the extension in your browser's extensions page
 - Restart your browser if issues persist
 
 ---
