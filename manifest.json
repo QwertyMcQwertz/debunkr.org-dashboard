@@ -32,7 +32,7 @@
     }
   },
   "background": {
-    "service_worker": "background.js"
+    "service_worker": "src/background.js"
   },
   "web_accessible_resources": [
     {
@@ -40,19 +40,8 @@
         "chat.html", 
         "chat.css", 
         "icons/*",
-        "debunkr_logo.svg",
-        "debunkr_logo_half.svg",
-        "event-bus.js",
-        "models.js",
-        "icon-manager.js",
-        "storage-manager.js", 
-        "poe-client.js", 
-        "ui-manager.js",
-        "routing-controller.js",
-        "chat-controller.js",
-        "message-controller.js",
-        "settings-controller.js",
-        "chat-manager-refactored.js"
+        "assets/*",
+        "src/*.js"
       ],
       "matches": ["<all_urls>"]
     }
