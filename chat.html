@@ -17,7 +17,7 @@
       <div class="sidebar-header">
         <div class="header-top">
           <div class="logo">
-            <img src="debunkr_logo.svg" alt="debunkr" class="sidebar-main-logo">
+            <img src="assets/debunkr_logo.svg" alt="debunkr" class="sidebar-main-logo">
           </div>
           <button class="collapse-btn" id="collapseBtn" title="Toggle sidebar">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
@@ -111,25 +111,22 @@
   </div>
   
   <!-- Core Infrastructure -->
-  <script src="event-bus.js"></script>
-  <script src="models.js"></script>
-  <script src="icon-manager.js"></script>
+  <script src="src/event-bus.js"></script>
+  <script src="src/models.js"></script>
+  <script src="src/icon-manager.js"></script>
   
   <!-- Service Layer -->
-  <script src="storage-manager.js"></script>
-  <script src="poe-client.js"></script>
-  <script src="ui-manager.js"></script>
+  <script src="src/storage-manager.js"></script>
+  <script src="src/poe-client.js"></script>
+  <script src="src/ui-manager.js"></script>
   
   <!-- Controller Layer -->
-  <script src="routing-controller.js"></script>
-  <script src="chat-controller.js"></script>
-  <script src="message-controller.js"></script>
-  <script src="settings-controller.js"></script>
+  <script src="src/routing-controller.js"></script>
+  <script src="src/chat-controller.js"></script>
+  <script src="src/message-controller.js"></script>
+  <script src="src/settings-controller.js"></script>
   
   <!-- Application Orchestrator -->
-  <script src="chat-manager-refactored.js"></script>
-  
-  <!-- Legacy compatibility (can be removed once migration is complete) -->
-  <!-- <script src="chat.js"></script> -->
+  <script src="src/chat-manager-refactored.js"></script>
 </body>
 </html>

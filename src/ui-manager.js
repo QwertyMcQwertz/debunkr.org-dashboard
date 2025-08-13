@@ -120,7 +120,7 @@ class UIManager {
       // If no welcome message exists, create it (this shouldn't happen in normal flow)
       messagesContainer.innerHTML = `
         <div class="welcome-message">
-          <div class="welcome-icon"><img src="debunkr_logo_half.svg" alt="debunkr" class="welcome-logo"></div>
+          <div class="welcome-icon"><img src="assets/debunkr_logo_half.svg" alt="debunkr" class="welcome-logo"></div>
           <h2>Scroll with Scrutiny.</h2>
           <p>Highlight suspicious text on any website, right-click, and let our egalitarian AI analyze it for bias, manipulation, and power structures.</p>
           
@@ -475,6 +475,11 @@ class UIManager {
     // Reset placeholder
     const messageInput = this.getElement('messageInput');
     messageInput.placeholder = 'Ask me to analyze any information, fact-check claims, or verify sources...';
+    
+    // Clear URL parameters to prevent quote restoration on refresh
+    if (window.location.search) {
+      window.history.replaceState({}, '', window.location.pathname);
+    }
   }
 
   /**

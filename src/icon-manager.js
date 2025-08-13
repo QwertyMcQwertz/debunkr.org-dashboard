@@ -26,8 +26,8 @@ class IconManager {
 
     /** @type {Object} Available SVG logos */
     this.logos = {
-      full: 'debunkr_logo.svg',
-      half: 'debunkr_logo_half.svg'
+      full: 'assets/debunkr_logo.svg',
+      half: 'assets/debunkr_logo_half.svg'
     };
 
     /** @type {Object} SVG icons used in the UI */
