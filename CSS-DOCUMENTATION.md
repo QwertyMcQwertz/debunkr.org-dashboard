@@ -7,7 +7,8 @@ The extension uses a professional, clean design system with a focus on readabili
 ## Design System
 
 ### Color Palette
-- **Primary Dark**: `#0f172a` - Main brand color, buttons, accents
+- **Primary Dark**: `#202C39` - Main brand color, buttons, accents
+- **Gray Base**: `#847E89` - Foundation for gray scale, primary text
 - **Secondary Dark**: `#1e293b` - Hover states, active elements
 - **Background Light**: `#f8fafc` - Main background, cards
 - **Background White**: `#ffffff` - Content areas, modals
@@ -59,17 +60,17 @@ Top section with logo and new chat button
 Extension branding
 - `display: flex; align-items: center` - Horizontal alignment
 - `font-size: 16px; font-weight: 600` - Prominent but not overwhelming
-- `color: #0f172a` - Brand color
+- `color: #202C39` - Brand color
 
 #### `.logo-icon`
 Icon next to logo text
 - `width: 28px; height: 28px` - Compact square
 - `border-radius: 6px` - Subtle rounding
-- `background: #0f172a; color: white` - High contrast
+- `background: #202C39; color: white` - High contrast
 
 #### `.new-chat-btn`
 Primary action button
-- `background: #0f172a; color: white` - Brand colors
+- `background: #202C39; color: white` - Brand colors
 - `border-radius: 6px` - Consistent rounding
 - `padding: 12px 16px` - Comfortable touch target
 - `transition: all 0.15s ease` - Smooth interactions
@@ -80,7 +81,7 @@ Chat search functionality
 - `background: #f1f5f9` - Subtle background
 - `border: 1px solid #cbd5e1` - Light border
 - `border-radius: 6px` - Consistent rounding
-- **Focus**: `border-color: #0f172a; background: #ffffff` - Active state
+- **Focus**: `border-color: #202C39; background: #ffffff` - Active state
 
 #### `.chat-item`
 Individual chat in sidebar
@@ -88,7 +89,7 @@ Individual chat in sidebar
 - `border-radius: 6px` - Subtle rounding
 - `transition: all 0.15s ease` - Smooth hover
 - **Hover**: `background: #f1f5f9; border-color: #e2e8f0` - Gentle highlight
-- **Active**: `background: #0f172a; color: white` - Clear selection
+- **Active**: `background: #202C39; color: white` - Clear selection
 
 #### `.chat-actions`
 Hover actions for chat items
@@ -110,7 +111,7 @@ Inline editable chat title
 - `border: 1px solid transparent` - Seamless appearance
 - `text-align: center` - Centered presentation
 - **Hover**: `background: rgba(15, 23, 42, 0.05)` - Subtle highlight
-- **Focus**: `background: white; border-color: #0f172a` - Clear edit mode
+- **Focus**: `background: white; border-color: #202C39` - Clear edit mode
 
 #### `.messages-container`
 Scrollable message area
@@ -131,8 +132,8 @@ User/AI avatar circles
 - `width: 32px; height: 32px` - Consistent size
 - `border-radius: 50%` - Perfect circle
 - `display: flex; align-items: center; justify-content: center` - Centered text
-- **User**: `background: #0f172a; color: white` - Brand colors
-- **Assistant**: `background: #e2e8f0; color: #0f172a` - Inverted colors
+- **User**: `background: #202C39; color: white` - Brand colors
+- **Assistant**: `background: #e2e8f0; color: #202C39` - Inverted colors
 
 #### `.message-content`
 Message text bubble
@@ -140,7 +141,7 @@ Message text bubble
 - `background: #f8fafc` - Light background for assistant
 - `padding: 14px 18px` - Comfortable padding
 - `border-radius: 12px` - Rounded bubble appearance
-- **User messages**: `background: #0f172a; color: white` - Inverted styling
+- **User messages**: `background: #202C39; color: white` - Inverted styling
 
 #### `.copy-message-btn`
 Copy button for messages
@@ -148,14 +149,14 @@ Copy button for messages
 - `border: 1px solid #e2e8f0` - Subtle border
 - `border-radius: 12px` - Rounded appearance
 - `padding: 2px 6px` - Compact but touchable
-- **Hover**: `background: #0f172a; color: white` - Brand color transformation
+- **Hover**: `background: #202C39; color: white` - Brand color transformation
 
 ### Quote Block Styles
 
 #### `.quote-block`
 Styled quotes in messages
 - `background: #f8fafc` - Light background
-- `border-left: 4px solid #0f172a` - Brand accent border
+- `border-left: 4px solid #202C39` - Brand accent border
 - `margin: 12px 0` - Vertical spacing
 - `padding: 16px 20px` - Comfortable padding
 - `border-radius: 0 8px 8px 0` - Right-side rounding
@@ -196,7 +197,7 @@ Input field container
 - `border: 1px solid #d1d5db` - Subtle border
 - `border-radius: 8px` - Rounded corners
 - `display: flex; align-items: flex-end` - Textarea + button layout
-- **Focus-within**: `border-color: #0f172a` - Active state
+- **Focus-within**: `border-color: #202C39` - Active state
 
 #### `#messageInput`
 Main text input area
@@ -208,7 +209,7 @@ Main text input area
 
 #### `.send-button`
 Message send button
-- `background: #0f172a; color: white` - Brand colors
+- `background: #202C39; color: white` - Brand colors
 - `width: 36px; height: 36px` - Square button
 - `border-radius: 6px` - Subtle rounding
 - `display: flex; align-items: center; justify-content: center` - Centered icon
