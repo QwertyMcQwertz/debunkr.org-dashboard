@@ -43,29 +43,17 @@ The debunkr.org Dashboard is a browser extension that helps you analyze suspicio
 
 ### Step 2: Install in Your Browser
 
-**For Chrome:**
-1. **Open Chrome** and go to `chrome://extensions/`
-2. **Turn on "Developer mode"** using the toggle in the top-right corner
-3. **Click "Load unpacked"** and select the `debunkr.org-dashboard` folder you downloaded
-4. **Pin the extension** to your toolbar by clicking the puzzle piece icon and pinning "debunkr.org Dashboard"
+1. **Open your browser's extensions page:**
+   - **Chrome:** `chrome://extensions/`
+   - **Edge:** `edge://extensions/`
+   - **Brave:** `brave://extensions/`
+   - **Opera:** `opera://extensions/`
 
-**For Edge:**
-1. **Open Edge** and go to `edge://extensions/`
-2. **Turn on "Developer mode"** using the toggle on the left sidebar
-3. **Click "Load unpacked"** and select the `debunkr.org-dashboard` folder you downloaded
-4. **Pin the extension** to your toolbar from the extensions menu
+2. **Turn on "Developer mode"** using the toggle (top-right corner for most browsers, left sidebar for Edge)
 
-**For Brave:**
-1. **Open Brave** and go to `brave://extensions/`
-2. **Turn on "Developer mode"** using the toggle in the top-right corner
 3. **Click "Load unpacked"** and select the `debunkr.org-dashboard` folder you downloaded
-4. **Pin the extension** to your toolbar by clicking the puzzle piece icon
 
-**For Opera:**
-1. **Open Opera** and go to `opera://extensions/`
-2. **Turn on "Developer mode"** using the toggle in the top-right corner
-3. **Click "Load unpacked"** and select the `debunkr.org-dashboard` folder you downloaded
-4. **Pin the extension** to your toolbar from the extensions menu
+4. **Pin the extension** to your toolbar by clicking the puzzle piece icon or from the extensions menu
 
 ### Step 3: Get Your API Key
 1. **Visit [Poe API Keys](https://poe.com/api_key)** to create your free API key
