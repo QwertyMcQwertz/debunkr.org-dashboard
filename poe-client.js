@@ -72,6 +72,14 @@ class PoeClient {
   }
 
   /**
+   * Clear request cache (call when chats are deleted to prevent resurrection)
+   */
+  clearRequestCache() {
+    this.requestCache.clear();
+    console.log('[PoeClient] Request cache cleared');
+  }
+
+  /**
    * Test Poe API connection with the provided API key.
    * Makes a minimal request to validate the key with timeout protection.
    * @param {string} apiKey - Poe API key to test.

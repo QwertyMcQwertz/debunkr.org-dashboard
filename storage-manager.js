@@ -42,10 +42,27 @@ class StorageManager {
       // Also save chat titles separately for context menu (unencrypted for easy access)
       const chatTitles = {};
       for (const [chatId, chat] of chats) {
+        // Validate chat ID is a valid positive integer before including in chatTitles
+        if (!Number.isInteger(chatId) || chatId <= 0) {
+          console.warn(`[StorageManager] Skipping invalid chat ID ${chatId} from chatTitles`);
+          continue;
+        }
+        
+        // Validate chat object has required properties
+        if (!chat || !chat.messages || !Array.isArray(chat.messages)) {
+          console.warn(`[StorageManager] Skipping invalid chat object for ID ${chatId}`);
+          continue;
+        }
+        
+        const messageCount = chat.messages.length;
+        const hasMessages = messageCount > 0;
+        
+        console.log(`[StorageManager] Updating chatTitles for chat ${chatId}: hasMessages=${hasMessages}, messageCount=${messageCount}`);
+        
         chatTitles[chatId] = {
-          title: chat.title,
-          lastActivity: chat.lastActivity,
-          hasMessages: chat.messages.length > 0
+          title: chat.title || 'New Chat',
+          lastActivity: chat.lastActivity || new Date().toISOString(),
+          hasMessages: hasMessages
         };
       }
       
@@ -96,6 +113,47 @@ class StorageManager {
   }
 
   /**
+   * Clean up invalid chat titles from storage
+   * @param {Map} validChats - Map of valid chat objects
+   * @returns {Promise<void>}
+   */
+  async cleanupChatTitles(validChats) {
+    try {
+      const result = await chrome.storage.local.get(['chatTitles']);
+      if (!result.chatTitles) {
+        return;
+      }
+      
+      const validChatIds = new Set(Array.from(validChats.keys()).map(id => String(id)));
+      const currentTitleIds = new Set(Object.keys(result.chatTitles));
+      
+      // Find orphaned chat title entries
+      const orphanedIds = Array.from(currentTitleIds).filter(id => {
+        const parsedId = parseInt(id);
+        return !Number.isInteger(parsedId) || parsedId <= 0 || !validChatIds.has(id);
+      });
+      
+      if (orphanedIds.length > 0) {
+        console.log(`[StorageManager] Cleaning up ${orphanedIds.length} orphaned chat titles:`, orphanedIds);
+        
+        // Create cleaned chat titles object
+        const cleanedChatTitles = {};
+        for (const [id, titleData] of Object.entries(result.chatTitles)) {
+          if (!orphanedIds.includes(id)) {
+            cleanedChatTitles[id] = titleData;
+          }
+        }
+        
+        // Save cleaned chat titles
+        await chrome.storage.local.set({ chatTitles: cleanedChatTitles });
+        console.log(`[StorageManager] Chat titles cleanup completed`);
+      }
+    } catch (error) {
+      console.error('[StorageManager] Error cleaning up chat titles:', error);
+    }
+  }
+
+  /**
    * Load and decrypt chat data from Chrome storage
    * @returns {Promise<{chats: Map, nextChatId: number, currentChatId: number|null}>} Decrypted chat data
    * @throws {Error} If storage access fails
@@ -109,17 +167,59 @@ class StorageManager {
         try {
           // Decrypt and parse chat data
           const decryptedData = await this.decryptData(result.encryptedChats);
-          chats = new Map(Object.entries(decryptedData).map(([k, v]) => [parseInt(k), v]));
+          
+          // Safely parse chat data with validation to prevent invalid chat IDs
+          const validChats = new Map();
+          for (const [key, chatData] of Object.entries(decryptedData)) {
+            // Parse and validate chat ID
+            const chatId = parseInt(key, 10);
+            if (!Number.isInteger(chatId) || chatId <= 0 || chatId > Number.MAX_SAFE_INTEGER) {
+              console.warn(`[StorageManager] Skipping invalid chat ID during load: ${key} (parsed: ${chatId})`);
+              continue;
+            }
+            
+            // Validate chat data structure
+            if (!chatData || typeof chatData !== 'object' || !Array.isArray(chatData.messages)) {
+              console.warn(`[StorageManager] Skipping invalid chat data for ID ${chatId}`);
+              continue;
+            }
+            
+            validChats.set(chatId, chatData);
+          }
+          
+          chats = validChats;
+          
+          // If we removed invalid data, force a cleanup save to prevent future corruption
+          const originalSize = Object.keys(decryptedData).length;
+          if (validChats.size < originalSize) {
+            console.warn(`[StorageManager] Detected data corruption: cleaned ${originalSize - validChats.size} invalid chat entries`);
+            // Mark for cleanup by setting a flag that the caller can check
+            chats.needsCleanup = true;
+          }
         } catch (decryptError) {
           console.warn('Failed to decrypt chat data, starting fresh');
           chats = new Map();
         }
       }
       
+      // Validate nextChatId to prevent corruption
+      let nextChatId = result.nextChatId || 1;
+      if (!Number.isInteger(nextChatId) || nextChatId <= 0) {
+        console.warn(`[StorageManager] Invalid nextChatId: ${result.nextChatId}, resetting to 1`);
+        nextChatId = 1;
+      }
+      
+      // Validate currentChatId to prevent corruption
+      let currentChatId = result.currentChatId || null;
+      if (currentChatId !== null && (!Number.isInteger(currentChatId) || currentChatId <= 0 || !chats.has(currentChatId))) {
+        console.warn(`[StorageManager] Invalid currentChatId: ${result.currentChatId}, clearing`);
+        currentChatId = null;
+      }
+      
       return {
         chats,
-        nextChatId: result.nextChatId || 1,
-        currentChatId: result.currentChatId || null
+        nextChatId,
+        currentChatId
       };
     } catch (error) {
       console.error('Error loading from storage:', error);
@@ -297,6 +397,22 @@ class StorageManager {
       // Clear cache on error
       this.cachedApiKey = null;
       this.cacheTimestamp = 0;
+      throw error;
+    }
+  }
+
+  /**
+   * Force clear all chat data - nuclear option for corruption recovery
+   * This completely resets the chat storage while preserving API key
+   * @returns {Promise<void>}
+   */
+  async clearAllChatData() {
+    try {
+      console.warn('[StorageManager] Clearing all chat data due to corruption');
+      await chrome.storage.local.remove(['encryptedChats', 'chatTitles', 'nextChatId', 'currentChatId']);
+      console.log('[StorageManager] Chat data cleared successfully');
+    } catch (error) {
+      console.error('[StorageManager] Error clearing chat data:', error);
       throw error;
     }
   }

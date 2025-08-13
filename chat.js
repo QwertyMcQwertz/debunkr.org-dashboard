@@ -99,6 +99,13 @@ class ChatManager {
       this.chats = data.chats;
       this.nextChatId = data.nextChatId;
       this.currentChatId = data.currentChatId;
+      
+      // Handle data corruption cleanup
+      if (this.chats.needsCleanup) {
+        console.log('[ChatManager] Forcing cleanup save due to data corruption');
+        delete this.chats.needsCleanup; // Remove the flag
+        await this.storageManager.forceSave(this.chats, this.nextChatId, this.currentChatId);
+      }
 
       // Handle URL actions
       if (this.urlAction === 'newChat' && this.pendingText) {
@@ -743,6 +750,72 @@ class ChatManager {
   /**
    * Clean up resources when the application is closing
    */
+  /**
+   * Nuclear reset option for extreme corruption cases
+   * Call from browser console: window.chatManager.resetAllData()
+   * WARNING: This will delete ALL chat data!
+   */
+  async resetAllData() {
+    if (!confirm('WARNING: This will delete ALL chat data permanently! Are you sure?')) {
+      return;
+    }
+    
+    try {
+      console.log('Performing nuclear reset of all chat data...');
+      await this.storageManager.clearAllChatData();
+      
+      // Reset in-memory state
+      this.chats = new Map();
+      this.nextChatId = 1;
+      this.currentChatId = null;
+      
+      // Create initial chat and refresh UI
+      this.createInitialChat();
+      this.uiManager.updateChatHistoryDisplay(this.chats, this.currentChatId);
+      
+      console.log('Nuclear reset completed successfully');
+      alert('All chat data has been reset. The page will reload.');
+      window.location.reload();
+    } catch (error) {
+      console.error('Error during nuclear reset:', error);
+      alert('Reset failed: ' + error.message);
+    }
+  }
+
+  /**
+   * Debug method to diagnose chat data state
+   * Call from browser console: window.chatManager.diagnoseDataState()
+   */
+  async diagnoseDataState() {
+    console.log('=== Chat Data Diagnosis ===');
+    console.log('Current chats in memory:', this.chats.size);
+    console.log('Chat IDs:', Array.from(this.chats.keys()));
+    console.log('Current chat ID:', this.currentChatId);
+    console.log('Next chat ID:', this.nextChatId);
+    
+    // Check storage state
+    try {
+      const rawStorage = await chrome.storage.local.get(['encryptedChats', 'chatTitles', 'nextChatId', 'currentChatId']);
+      console.log('Storage nextChatId:', rawStorage.nextChatId);
+      console.log('Storage currentChatId:', rawStorage.currentChatId);
+      console.log('Storage chatTitles keys:', rawStorage.chatTitles ? Object.keys(rawStorage.chatTitles) : 'none');
+      
+      // Try to decrypt and inspect raw chat data
+      if (rawStorage.encryptedChats) {
+        try {
+          const decrypted = await this.storageManager.decryptData(rawStorage.encryptedChats);
+          console.log('Raw encrypted chat keys:', Object.keys(decrypted));
+          console.log('Raw encrypted chat key types:', Object.keys(decrypted).map(k => `${k} (${typeof k})`));
+        } catch (e) {
+          console.error('Failed to decrypt chat data for diagnosis:', e);
+        }
+      }
+    } catch (error) {
+      console.error('Error diagnosing storage:', error);
+    }
+    console.log('=== End Diagnosis ===');
+  }
+
   cleanup() {
     console.log('ChatManager cleanup initiated');
     
@@ -763,5 +836,8 @@ class ChatManager {
 
 document.addEventListener('DOMContentLoaded', () => {
   console.log('ChatManager initializing with Poe API integration...');
-  new ChatManager();
+  const chatManager = new ChatManager();
+  
+  // Expose for debugging
+  window.chatManager = chatManager;
 });

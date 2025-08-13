@@ -45,6 +45,9 @@ class ChatController {
     this.eventBus.on(EventTypes.CHAT_RENAMED, this.handleChatRenamed.bind(this));
     this.eventBus.on(EventTypes.CHAT_SEARCH, this.handleChatSearch.bind(this));
     this.eventBus.on(EventTypes.STORAGE_LOADED, this.handleStorageLoaded.bind(this));
+    this.eventBus.on(EventTypes.MESSAGE_RECEIVED, this.handleMessageReceived.bind(this));
+    // CRITICAL: Listen for chat updates (messages added/removed) to trigger storage saves
+    this.eventBus.on(EventTypes.CHAT_UPDATED, this.handleChatUpdated.bind(this));
   }
 
   /**
@@ -63,6 +66,18 @@ class ChatController {
         const chatsData = data.chats instanceof Map ? Object.fromEntries(data.chats) : data.chats;
         
         for (const [chatId, chatData] of Object.entries(chatsData)) {
+          // Validate chat ID is a valid positive integer
+          const parsedChatId = parseInt(chatId, 10);
+          if (!Number.isInteger(parsedChatId) || parsedChatId <= 0 || parsedChatId > Number.MAX_SAFE_INTEGER) {
+            console.warn(`[ChatController] Skipping invalid chat ID: ${chatId} (parsed: ${parsedChatId})`);
+            continue;
+          }
+          
+          // Validate chat data object has required properties
+          if (!chatData || typeof chatData !== 'object') {
+            console.warn(`[ChatController] Skipping invalid chat data for ID ${chatId}`);
+            continue;
+          }
           
           let chatInstance;
           if (chatData instanceof Chat) {
@@ -83,12 +98,38 @@ class ChatController {
           console.log(`[ChatController] Chat instance constructor:`, chatInstance.constructor.name);
           console.log(`[ChatController] Chat has addMessage:`, typeof chatInstance.addMessage);
           
-          this.chats.set(parseInt(chatId), chatInstance);
+          this.chats.set(parsedChatId, chatInstance);
         }
       }
       
-      this.nextChatId = data.nextChatId || this.calculateNextChatId();
+      // Validate and set nextChatId
+      const providedNextChatId = data.nextChatId;
+      this.nextChatId = (!Number.isInteger(providedNextChatId) || providedNextChatId <= 0) 
+        ? this.calculateNextChatId() 
+        : Math.max(providedNextChatId, this.calculateNextChatId());
+      
+      // Validate and set currentChatId
       this.currentChatId = data.currentChatId || null;
+      if (this.currentChatId && (!Number.isInteger(this.currentChatId) || this.currentChatId <= 0 || !this.chats.has(this.currentChatId))) {
+        console.warn(`[ChatController] Clearing invalid current chat ID: ${this.currentChatId}`);
+        this.currentChatId = null;
+      }
+
+      // Check if we cleaned up invalid data and force save if needed
+      const originalChatCount = data.chats 
+        ? Object.keys(data.chats instanceof Map ? Object.fromEntries(data.chats) : data.chats).length 
+        : 0;
+      const needsCleanup = this.chats.size !== originalChatCount || 
+                           providedNextChatId !== this.nextChatId ||
+                           data.currentChatId !== this.currentChatId;
+      
+      if (needsCleanup && originalChatCount > 0) {
+        console.log(`[ChatController] Cleaned up invalid data (${originalChatCount} -> ${this.chats.size} chats), forcing save`);
+        await this.storageManager.forceSave(this.chats, this.nextChatId, this.currentChatId);
+      }
+
+      // Clean up any orphaned chat titles in storage
+      await this.storageManager.cleanupChatTitles(this.chats);
 
       // Emit initialization complete event
       this.eventBus.emit(EventTypes.CHAT_LOADED, {
@@ -115,7 +156,24 @@ class ChatController {
     if (this.chats.size === 0) {
       return 1;
     }
-    return Math.max(...this.chats.keys()) + 1;
+    
+    // Filter out invalid IDs (negative numbers, NaN, etc.) and ensure we get valid positive integers
+    const validIds = Array.from(this.chats.keys()).filter(id => Number.isInteger(id) && id > 0 && id <= Number.MAX_SAFE_INTEGER);
+    
+    if (validIds.length === 0) {
+      return 1; // If no valid IDs found, start from 1
+    }
+    
+    const maxId = Math.max(...validIds);
+    const nextId = maxId + 1;
+    
+    // Ensure the calculated ID is valid
+    if (!Number.isInteger(nextId) || nextId <= 0 || nextId > Number.MAX_SAFE_INTEGER) {
+      console.error(`[ChatController] Calculated invalid nextChatId: ${nextId}, resetting to 1`);
+      return 1;
+    }
+    
+    return nextId;
   }
 
   /**
@@ -231,8 +289,10 @@ class ChatController {
       chat: chat
     });
 
+    // Don't clear input if there's a pending quote - preserve it across chat switches
     this.eventBus.emit(EventTypes.UI_CLEAR, {
-      type: 'input'
+      type: 'input',
+      preserveQuote: true
     });
 
     this.saveToStorage();
@@ -280,7 +340,15 @@ class ChatController {
       type: 'updateChatHistory'
     });
 
-    this.saveToStorage();
+    // Clear API response cache to prevent deleted chats from resurrecting
+    this.eventBus.emit(EventTypes.CACHE_CLEAR, {
+      type: 'requestCache',
+      reason: 'chatDeleted',
+      chatId
+    });
+
+    // Force immediate save for chat deletion to prevent reappearance
+    this.forceSave();
     console.log(`[ChatController] Deleted chat ${chatId}`);
     return true;
   }
@@ -317,7 +385,8 @@ class ChatController {
       type: 'updateChatHistory'
     });
 
-    this.saveToStorage();
+    // Force immediate save for rename to ensure context menu updates immediately
+    this.forceSave();
     console.log(`[ChatController] Renamed chat ${chatId} from "${oldTitle}" to "${chat.title}"`);
     return true;
   }
@@ -471,6 +540,71 @@ class ChatController {
     }
   }
 
+  handleMessageReceived(data) {
+    console.log(`[ChatController] Message received in chat ${data.chat?.id}, forcing storage save for context menu sync`);
+    
+    // Force immediate save when messages are received to ensure context menu updates
+    this.forceSave();
+  }
+
+  handleChatUpdated(data) {
+    console.log(`[ChatController] Chat ${data.chatId} updated: ${data.changeType}`);
+    
+    // For message-related changes, immediately save to storage to update chatTitles
+    if (data.changeType === 'messageAdded' || data.changeType === 'messageRemoved') {
+      // Force immediate save to ensure context menu sync
+      this.forceSave();
+      console.log(`[ChatController] Forced save for chat ${data.chatId} after ${data.changeType}`);
+    } else {
+      // For other updates (title changes, etc), use debounced save
+      this.saveToStorage();
+    }
+  }
+
+  /**
+   * Validate data integrity for debugging
+   * @returns {Object} Validation results
+   */
+  validateDataIntegrity() {
+    const validation = {
+      valid: true,
+      issues: [],
+      chatIds: [],
+      invalidChatIds: [],
+      chatTitleConsistency: true
+    };
+
+    // Check all chat IDs are valid
+    for (const [chatId, chat] of this.chats) {
+      validation.chatIds.push(chatId);
+      
+      if (!Number.isInteger(chatId) || chatId <= 0) {
+        validation.valid = false;
+        validation.invalidChatIds.push(chatId);
+        validation.issues.push(`Invalid chat ID: ${chatId}`);
+      }
+      
+      if (!chat || typeof chat !== 'object') {
+        validation.valid = false;
+        validation.issues.push(`Invalid chat object for ID: ${chatId}`);
+      }
+    }
+
+    // Check current chat ID is valid
+    if (this.currentChatId && (!Number.isInteger(this.currentChatId) || this.currentChatId <= 0 || !this.chats.has(this.currentChatId))) {
+      validation.valid = false;
+      validation.issues.push(`Invalid current chat ID: ${this.currentChatId}`);
+    }
+
+    // Check next chat ID is reasonable
+    if (!Number.isInteger(this.nextChatId) || this.nextChatId <= 0) {
+      validation.valid = false;
+      validation.issues.push(`Invalid next chat ID: ${this.nextChatId}`);
+    }
+
+    return validation;
+  }
+
   /**
    * Get diagnostic information
    * @returns {Object} Diagnostic data
@@ -481,7 +615,8 @@ class ChatController {
       currentChatId: this.currentChatId,
       nextChatId: this.nextChatId,
       emptyChats: Array.from(this.chats.values()).filter(chat => chat.isEmpty()).length,
-      totalMessages: Array.from(this.chats.values()).reduce((total, chat) => total + chat.getMessageCount(), 0)
+      totalMessages: Array.from(this.chats.values()).reduce((total, chat) => total + chat.getMessageCount(), 0),
+      validation: this.validateDataIntegrity()
     };
   }
 

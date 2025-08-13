@@ -46,6 +46,7 @@ class MessageController {
     this.eventBus.on(EventTypes.MESSAGE_LOADING, this.handleMessageLoading.bind(this));
     this.eventBus.on(EventTypes.IMAGE_ADDED, this.handleImageAdded.bind(this));
     this.eventBus.on(EventTypes.UI_UPDATE, this.handleUIUpdate.bind(this));
+    this.eventBus.on(EventTypes.CACHE_CLEAR, this.handleCacheClear.bind(this));
   }
 
   /**
@@ -386,6 +387,14 @@ class MessageController {
   handleUIUpdate(data) {
     if (data.type === 'sendMessage') {
       this.sendMessage(data.chat, data.content, data.images);
+    }
+  }
+
+  handleCacheClear(data) {
+    console.log(`[MessageController] Cache clear requested: ${data.type} (reason: ${data.reason})`);
+    
+    if (data.type === 'requestCache') {
+      this.poeClient.clearRequestCache();
     }
   }
 

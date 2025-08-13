@@ -572,7 +572,14 @@ class ChatApplication {
   handleUIClear(data) {
     switch (data.type) {
       case 'input':
-        this.components.uiManager.clearInput();
+        if (data.preserveQuote) {
+          // Only clear input text, preserve quote block when switching chats
+          this.components.uiManager.clearInputText();
+          this.components.uiManager.clearAttachedImages();
+        } else {
+          // Normal clear - clears everything including quote
+          this.components.uiManager.clearInput();
+        }
         break;
       case 'images':
         this.components.uiManager.clearAttachedImages();

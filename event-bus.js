@@ -246,6 +246,7 @@ const EventTypes = {
   CHAT_DELETED: 'chat:deleted',
   CHAT_RENAMED: 'chat:renamed',
   CHAT_SEARCH: 'chat:search',
+  CHAT_UPDATED: 'chat:updated',
 
   // Message Events  
   MESSAGE_SENT: 'message:sent',
@@ -282,6 +283,9 @@ const EventTypes = {
   API_REQUEST_SUCCESS: 'api:request:success', 
   API_REQUEST_ERROR: 'api:request:error',
   API_REQUEST_TIMEOUT: 'api:request:timeout',
+
+  // Cache Events
+  CACHE_CLEAR: 'cache:clear',
 
   // Application Events
   APP_READY: 'app:ready',

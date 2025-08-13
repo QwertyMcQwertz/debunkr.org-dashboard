@@ -603,6 +603,17 @@ class UIManager {
   }
 
   /**
+   * Clear input text only, preserving quote block
+   * Used when switching chats to preserve pending quotes
+   */
+  clearInputText() {
+    const messageInput = this.getElement('messageInput');
+    messageInput.value = '';
+    this.adjustTextareaHeight();
+    this.updateSendButton();
+  }
+
+  /**
    * Display status message in settings modal
    * Shows success, error, or loading states for settings operations
    * @param {string} message - Status message to display

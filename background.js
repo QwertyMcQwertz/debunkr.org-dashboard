@@ -105,9 +105,30 @@ async function updateContextMenuWithChats() {
     console.log('Context menu update - chatTitles:', result.chatTitles);
     
     if (result.chatTitles && Object.keys(result.chatTitles).length > 0) {
-      // Sort chats by last activity
+      
+      // Sort chats by last activity with robust filtering
       const sortedChats = Object.entries(result.chatTitles)
-        .filter(([id, chat]) => chat.hasMessages) // Only show chats with messages
+        .filter(([id, chat]) => {
+          // Validate chat ID is a valid positive integer
+          const chatId = parseInt(id);
+          if (!Number.isInteger(chatId) || chatId <= 0) {
+            console.warn(`[Background] Filtering out invalid chat ID: ${id}`);
+            return false;
+          }
+          
+          // Validate chat object exists and has required properties
+          if (!chat || typeof chat !== 'object') {
+            console.warn(`[Background] Filtering out invalid chat object for ID: ${id}`);
+            return false;
+          }
+          
+          // Only show chats with messages
+          if (!chat.hasMessages) {
+            return false;
+          }
+          
+          return true;
+        })
         .sort(([,a], [,b]) => new Date(b.lastActivity) - new Date(a.lastActivity))
         .slice(0, 5); // Limit to 5 most recent chats
       
@@ -128,9 +149,11 @@ async function updateContextMenuWithChats() {
             console.error(`Error creating context menu item for chat ${chatId}:`, error);
           }
         });
+      } else {
+        console.log('No valid chats with messages found for context menu');
       }
     } else {
-      console.log('No chatTitles found for context menu');
+      console.log('No chatTitles found in storage for context menu');
     }
   } catch (error) {
     console.error('Error updating context menu:', error);
@@ -164,6 +187,8 @@ let contextMenuUpdateTimeout;
 // Listen for storage changes to update context menu
 chrome.storage.onChanged.addListener((changes, namespace) => {
   if (namespace === 'local' && (changes.chatTitles || changes.encryptedChats)) {
+    console.log('[Background] Storage changed, updating context menu:', changes);
+    
     // Clear existing timeout
     if (contextMenuUpdateTimeout) {
       clearTimeout(contextMenuUpdateTimeout);
@@ -171,6 +196,7 @@ chrome.storage.onChanged.addListener((changes, namespace) => {
     
     // Debounce context menu updates to prevent rapid rebuilds
     contextMenuUpdateTimeout = setTimeout(() => {
+      console.log('[Background] Rebuilding context menu due to storage changes');
       setupContextMenus(); // Rebuild entire context menu
     }, 500);
   }
