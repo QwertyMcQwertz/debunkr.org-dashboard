@@ -597,6 +597,7 @@ class UIManager {
     const messageInput = this.getElement('messageInput');
     messageInput.value = '';
     this.clearAttachedImages();
+    this.hideInputQuote(); // Clear any quote block
     this.adjustTextareaHeight();
     this.updateSendButton();
   }
