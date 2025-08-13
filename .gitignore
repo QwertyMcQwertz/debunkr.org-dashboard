@@ -7,6 +7,12 @@ node_modules/
 *.log
 *.tmp
 
+# Build artifacts
+packages/
+build/
+*.zip
+*.xpi
+
 # IDE/Editor files
 .vscode/
 .idea/
@@ -28,7 +34,6 @@ Thumbs.db
 *.backup
 *-original.*
 *-backup.*
-*.zip
 test-*.html
 debug-*.html
 

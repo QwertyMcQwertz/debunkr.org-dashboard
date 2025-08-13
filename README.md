@@ -4,9 +4,9 @@
 
 The debunkr.org Dashboard is a browser extension that helps you analyze suspicious content on the web using AI-powered analysis. Simply highlight text on any website, right-click, and let our egalitarian AI analyze it for bias, manipulation, and power structures.
 
-**Compatible with:** Chrome, Edge, Brave, Opera, and other Chromium-based browsers
+**Compatible with:** Chrome, Edge, Brave, Opera, Firefox, and other Chromium-based browsers
 
-> **Note:** This extension uses Manifest V3 and is optimized for Chromium-based browsers. Firefox compatibility would require additional modifications for Manifest V2.
+> **Note:** This extension uses Manifest V3 and is compatible with both Chromium-based browsers and modern Firefox (109+).
 
 ## ✨ What You Can Do
 
@@ -37,35 +37,32 @@ The debunkr.org Dashboard is a browser extension that helps you analyze suspicio
 
 ## 🚀 Installation
 
-### Step 1: Download the Extension
-1. **Download** or clone this repository to your computer
-2. **Unzip the folder** if you downloaded a zip file
+### Quick Install (Recommended)
 
-### Step 2: Install in Your Browser
+**🦊 Firefox**
+1. Download `debunkr-dashboard-firefox.xpi`
+2. Go to `about:debugging` → This Firefox
+3. Click "Load Temporary Add-on" → Select the `.xpi` file
+4. ✅ Extension installed!
 
-1. **Open your browser's extensions page:**
-   - **Chrome:** `chrome://extensions/`
-   - **Edge:** `edge://extensions/`
-   - **Brave:** `brave://extensions/`
-   - **Opera:** `opera://extensions/`
+**🌐 Chrome/Edge/Brave**  
+1. Download and extract `debunkr-dashboard-chrome.zip`
+2. Go to `chrome://extensions/` (or your browser's extension page)
+3. Enable "Developer mode" → Click "Load unpacked" 
+4. Select the extracted folder
+5. ✅ Extension installed!
 
-2. **Turn on "Developer mode"** using the toggle (top-right corner for most browsers, left sidebar for Edge)
+### Setup
+1. Click the extension icon in your toolbar
+2. Click Settings (⚙️) and enter your [Poe API key](https://poe.com/api_key)
+3. Test the connection and save
+4. Right-click any text on websites to start analyzing!
 
-3. **Click "Load unpacked"** and select the `debunkr.org-dashboard` folder you downloaded
+> **Note:** Firefox extensions are temporary and removed on restart. Chrome extensions persist until manually removed.
 
-4. **Pin the extension** to your toolbar by clicking the puzzle piece icon or from the extensions menu
+### Developers
 
-### Step 3: Get Your API Key
-1. **Visit [Poe API Keys](https://poe.com/api_key)** to create your free API key
-2. **Copy your API key** (save it somewhere safe)
-
-### Step 4: Set Up the Extension
-1. **Click the debunkr.org Dashboard icon** in your browser toolbar
-2. **Click the ⚙️ Settings button** (you'll see this in the welcome message)
-3. **Paste your API key** and click "Save"
-4. **Click "Test Connection"** to make sure everything works
-
-That's it! You're ready to start analyzing web content.
+Clone this repository and follow the Quick Install steps above, or use the build scripts for development.
 
 ## 💡 How to Use
 
@@ -131,6 +128,87 @@ When you're waiting for an analysis and switch to another tab, you'll see:
 - **No tracking** - We don't collect any personal information
 - **Encrypted storage** - Your data is protected even on your own computer
 - **Source attribution** - See where analyzed text came from with clickable links
+
+## 🛠️ Development
+
+### Building the Extension
+
+This extension uses a clean build system that creates browser-specific packages without modifying the main manifest.json:
+
+```bash
+# Build both Chrome and Firefox packages
+./build.sh
+
+# Development builds with more options
+./dev-build.sh --help                # Show all options
+./dev-build.sh chrome                # Build Chrome only
+./dev-build.sh firefox               # Build Firefox only  
+./dev-build.sh both --dev            # Keep build directory for debugging
+./dev-build.sh both --clean          # Clean packages before building
+```
+
+### NPM Scripts (if you have Node.js)
+
+```bash
+npm run build              # Build both browsers
+npm run build:chrome       # Build Chrome only
+npm run build:firefox      # Build Firefox only  
+npm run build:dev          # Development build (both browsers)
+npm run build:clean        # Clean build (both browsers)
+npm test                   # Test build process
+npm run release            # Production release build
+```
+
+### CI/CD and Automation
+
+The repository includes GitHub Actions workflows for automated building and releasing:
+
+- **`build-test.yml`** - Runs on all pushes and PRs to validate builds
+- **`build-and-release.yml`** - Creates releases with packages when you push a version tag
+- **`manual-build.yml`** - Manual workflow for testing specific browser builds
+
+#### Creating a Release
+
+1. Update version in `manifest.json`, `manifest-chrome.json`, `manifest-firefox.json`, and `package.json`
+2. Commit your changes: `git commit -am "Bump version to 2.2.0"`
+3. Create and push a tag: `git tag v2.2.0 && git push origin v2.2.0`
+4. GitHub Actions will automatically build and create a release with downloadable packages
+
+#### Manual Testing
+
+Use the "Manual Build" workflow in GitHub Actions to test specific browsers or development builds without creating a release.
+
+### Cross-Browser Architecture
+
+The extension uses a sophisticated cross-browser compatibility system:
+
+- **`manifest.json`** - Main manifest (Chrome/Chromium)
+- **`manifest-chrome.json`** - Chrome-specific configuration  
+- **`manifest-firefox.json`** - Firefox-specific configuration
+- **`browser-polyfill.js`** - WebExtensions polyfill for cross-browser APIs
+- **`src/browser-compat.js`** - Custom cross-browser API wrapper
+- **`src/background.js`** - Chrome service worker with cross-browser imports
+- **`src/background-firefox.js`** - Firefox-specific background script
+
+### File Structure
+
+```
+debunkr.org-dashboard/
+├── src/                          # Source files
+│   ├── background.js            # Chrome service worker
+│   ├── background-firefox.js    # Firefox background script
+│   ├── browser-compat.js        # Cross-browser API wrapper
+│   └── ...                      # Other source files
+├── packages/                     # Built extension packages
+│   ├── debunkr-dashboard-chrome.zip
+│   └── debunkr-dashboard-firefox.xpi
+├── manifest.json                # Main manifest (Chrome)
+├── manifest-chrome.json         # Chrome-specific manifest
+├── manifest-firefox.json        # Firefox-specific manifest
+├── browser-polyfill.js          # WebExtensions polyfill
+├── build.sh                     # Production build script
+└── dev-build.sh                 # Development build script
+```
 
 ## 🆘 Need Help?
 

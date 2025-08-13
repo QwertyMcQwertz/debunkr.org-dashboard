@@ -1,8 +1,7 @@
-// Background service worker for the extension
-// Import browser compatibility layer
-importScripts('../browser-polyfill.js', 'browser-compat.js');
+// Firefox-compatible background script (classic)
+// Loads polyfill and compatibility layer, then runs main logic
 
-// Use cross-browser API
+// Use cross-browser API (available globally after browser-compat.js loads)
 const { runtime, tabs, windows, storage, contextMenus } = browserAPI;
 
 runtime.onInstalled.addListener(() => {
@@ -152,11 +151,9 @@ async function updateContextMenuWithChats() {
               contexts: ['selection']
             });
           } catch (error) {
-            console.error(`Error creating context menu item for chat ${chatId}:`, error);
+            console.warn(`[Background] Failed to create context menu for chat ${chatId}:`, error);
           }
         });
-      } else {
-        console.log('No valid chats with messages found for context menu');
       }
     } else {
       console.log('No chatTitles found in storage for context menu');

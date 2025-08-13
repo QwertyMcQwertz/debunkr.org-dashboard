@@ -22,6 +22,9 @@ class ChatApplication {
     /** @type {boolean} Application initialization status */
     this.initialized = false;
     
+    /** @type {Object} Cross-browser runtime API */
+    this.runtime = this._getBrowserRuntime();
+    
     /** @type {Object} Component instances */
     this.components = {
       iconManager: null,
@@ -54,6 +57,31 @@ class ChatApplication {
 
     // Initialize application
     this.initialize();
+  }
+
+  /**
+   * Get cross-browser compatible runtime API
+   * @private
+   * @returns {Object} Runtime API object
+   */
+  _getBrowserRuntime() {
+    if (typeof browser !== 'undefined' && browser.runtime) {
+      return browser.runtime;
+    } else if (typeof chrome !== 'undefined' && chrome.runtime) {
+      return {
+        sendMessage: (message) => new Promise((resolve, reject) => {
+          chrome.runtime.sendMessage(message, (response) => {
+            if (chrome.runtime.lastError) {
+              reject(chrome.runtime.lastError);
+            } else {
+              resolve(response);
+            }
+          });
+        })
+      };
+    } else {
+      throw new Error('No runtime API available');
+    }
   }
 
   /**
@@ -649,7 +677,7 @@ class ChatApplication {
 
   async openOrFocusUrl(url) {
     try {
-      await chrome.runtime.sendMessage({ action: 'openOrFocusUrl', url: url });
+      await this.runtime.sendMessage({ action: 'openOrFocusUrl', url: url });
     } catch (error) {
       console.error('[ChatApplication] Error opening URL:', error);
       window.open(url, '_blank');

@@ -1,0 +1,40 @@
+{
+  "name": "debunkr-dashboard",
+  "version": "2.1.0",
+  "description": "AI-powered misinformation analysis browser extension with cross-browser compatibility",
+  "scripts": {
+    "build": "./build.sh",
+    "build:chrome": "./dev-build.sh chrome",
+    "build:firefox": "./dev-build.sh firefox",
+    "build:dev": "./dev-build.sh both --dev",
+    "build:clean": "./dev-build.sh both --clean",
+    "dev:chrome": "./dev-build.sh chrome --dev",
+    "dev:firefox": "./dev-build.sh firefox --dev",
+    "test": "./build.sh && echo 'Build test passed!'",
+    "release": "./build.sh && echo 'Ready for release! Packages in packages/'"
+  },
+  "keywords": [
+    "browser-extension",
+    "webextension",
+    "firefox",
+    "chrome",
+    "ai",
+    "misinformation",
+    "fact-checking"
+  ],
+  "author": "debunkr.org",
+  "license": "MIT",
+  "homepage": "https://github.com/QwertyMcQwertz/debunkr.org-dashboard",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/QwertyMcQwertz/debunkr.org-dashboard.git"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "devDependencies": {},
+  "browserslist": [
+    "chrome >= 88",
+    "firefox >= 109"
+  ]
+}

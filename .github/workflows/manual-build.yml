@@ -1,0 +1,76 @@
+name: Manual Build
+
+on:
+  workflow_dispatch:
+    inputs:
+      browser:
+        description: 'Browser to build'
+        required: true
+        default: 'both'
+        type: choice
+        options:
+        - both
+        - chrome
+        - firefox
+      dev_mode:
+        description: 'Development mode (keep build directory)'
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up environment
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y zip
+        
+    - name: Make build scripts executable
+      run: |
+        chmod +x build.sh
+        chmod +x dev-build.sh
+        
+    - name: Build extension
+      run: |
+        if [ "${{ inputs.browser }}" = "both" ]; then
+          if [ "${{ inputs.dev_mode }}" = "true" ]; then
+            ./dev-build.sh both --dev
+          else
+            ./build.sh
+          fi
+        else
+          if [ "${{ inputs.dev_mode }}" = "true" ]; then
+            ./dev-build.sh ${{ inputs.browser }} --dev
+          else
+            ./dev-build.sh ${{ inputs.browser }}
+          fi
+        fi
+        
+    - name: Show build results
+      run: |
+        echo "📦 Build completed for: ${{ inputs.browser }}"
+        echo "🔧 Development mode: ${{ inputs.dev_mode }}"
+        echo ""
+        echo "📋 Generated packages:"
+        ls -la packages/ || echo "No packages directory"
+        
+        if [ "${{ inputs.dev_mode }}" = "true" ] && [ -d "build" ]; then
+          echo ""
+          echo "🛠️ Build directory contents:"
+          find build/ -type f | head -20
+        fi
+        
+    - name: Upload packages
+      uses: actions/upload-artifact@v4
+      with:
+        name: manual-build-${{ inputs.browser }}-${{ github.sha }}
+        path: |
+          packages/
+          build/
+        retention-days: 7

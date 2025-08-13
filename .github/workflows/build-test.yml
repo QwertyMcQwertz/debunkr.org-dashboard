@@ -1,0 +1,73 @@
+name: Build and Test
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up environment
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y zip
+        
+    - name: Make build scripts executable
+      run: |
+        chmod +x build.sh
+        chmod +x dev-build.sh
+        
+    - name: Build extension packages
+      run: ./build.sh
+      
+    - name: Verify build output
+      run: |
+        echo "📦 Built packages:"
+        ls -la packages/
+        echo ""
+        echo "📋 Package sizes:"
+        du -h packages/*
+        echo ""
+        echo "✅ Build completed successfully!"
+        
+    - name: Test package integrity
+      run: |
+        echo "🔍 Testing Chrome package..."
+        unzip -t packages/debunkr-dashboard-chrome.zip
+        echo "✅ Chrome package is valid"
+        
+        echo "🔍 Testing Firefox package..."
+        unzip -t packages/debunkr-dashboard-firefox.xpi
+        echo "✅ Firefox package is valid"
+        
+        echo "🔍 Checking manifest configurations..."
+        CHROME_BG=$(unzip -p packages/debunkr-dashboard-chrome.zip manifest.json | grep '"service_worker"' || echo "")
+        FIREFOX_BG=$(unzip -p packages/debunkr-dashboard-firefox.xpi manifest.json | grep '"scripts"' || echo "")
+        
+        if [ -n "$CHROME_BG" ]; then
+          echo "✅ Chrome uses service_worker"
+        else
+          echo "❌ Chrome service_worker configuration missing"
+          exit 1
+        fi
+        
+        if [ -n "$FIREFOX_BG" ]; then
+          echo "✅ Firefox uses background.scripts"
+        else
+          echo "❌ Firefox background.scripts configuration missing"
+          exit 1
+        fi
+        
+    - name: Upload build artifacts (PR/Push)
+      uses: actions/upload-artifact@v4
+      with:
+        name: extension-packages-${{ github.sha }}
+        path: packages/
+        retention-days: 30
