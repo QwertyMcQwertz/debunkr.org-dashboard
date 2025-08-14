@@ -6,6 +6,8 @@ The debunkr.org Dashboard is a browser extension that helps you analyze suspicio
 
 **Compatible with:** Chrome, Edge, Brave, Opera, Firefox, and other Chromium-based browsers
 
+<img src="screenshots/new_chat.png" width="48%" alt="New Chat Interface"> <img src="screenshots/example_chat.png" width="48%" alt="Example Analysis Chat">
+
 > **Note:** This extension uses Manifest V3 and is compatible with both Chromium-based browsers and modern Firefox (109+).
 
 ## ✨ What You Can Do

@@ -43,8 +43,9 @@ API-REFERENCE*.md
 DEBUG-FIXES*.md
 *-MIGRATION*.md
 
-# Screenshots and images (except icons)
+# Screenshots and images (except icons and screenshots)
 *.png
 *.jpg
 *.jpeg
 !icons/*.png
+!screenshots/*.png
