@@ -39,6 +39,7 @@ class RoutingController {
     const text = urlParams.get('text');
     const source = urlParams.get('source');
     const chatId = urlParams.get('chatId');
+    
 
     // Validate and sanitize action parameter
     const validActions = ['newChat', 'selectChat', 'continueChat'];
@@ -56,8 +57,9 @@ class RoutingController {
           this.pendingText = decodedText;
         }
       } catch (error) {
-        console.warn('[RoutingController] Invalid text parameter encoding:', error);
-        this.pendingText = null;
+        console.warn('[RoutingController] Invalid text parameter encoding, using raw text:', error);
+        // Fallback: use the raw text parameter if decoding fails
+        this.pendingText = text.length > 10000 ? text.substring(0, 10000) : text;
       }
     }
 
@@ -120,6 +122,7 @@ class RoutingController {
       action: 'default',
       data: null
     };
+    
 
     if (this.urlAction === 'newChat' && this.pendingText) {
       routingDecision.action = 'createNewChatWithText';
