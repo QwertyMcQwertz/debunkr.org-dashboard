@@ -397,17 +397,26 @@ class ChatController {
    * @returns {Array<Chat>} Matching chats
    */
   searchChats(query) {
+    let results;
+    let searchTerm;
+
     if (!query || !query.trim()) {
-      return Array.from(this.chats.values());
+      results = Array.from(this.chats.values());
+      searchTerm = '';
+    } else {
+      searchTerm = query.toLowerCase();
+      results = Array.from(this.chats.values()).filter(chat => {
+        // Skip empty "New Chat" chats in search results
+        if (chat.title === 'New Chat' && chat.isEmpty()) {
+          return false;
+        }
+        
+        return chat.title.toLowerCase().includes(searchTerm) ||
+               chat.searchMessages(searchTerm).length > 0;
+      });
     }
 
-    const searchTerm = query.toLowerCase();
-    const results = Array.from(this.chats.values()).filter(chat =>
-      chat.title.toLowerCase().includes(searchTerm) ||
-      chat.searchMessages(searchTerm).length > 0
-    );
-
-    // Emit search event
+    // Always emit search event so UI updates properly
     this.eventBus.emit(EventTypes.CHAT_SEARCH, {
       query: searchTerm,
       results,
