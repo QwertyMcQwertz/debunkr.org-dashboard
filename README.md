@@ -39,16 +39,14 @@ The debunkr.org Dashboard is a browser extension that helps you analyze suspicio
 
 ### Quick Install (Recommended)
 
-> 📥 **[Download from Releases](https://github.com/QwertyMcQwertz/debunkr.org-dashboard/releases/latest)** ← Click here to get the latest version!
-
 **🦊 Firefox**
-1. **[Download `debunkr-dashboard-firefox.xpi`](https://github.com/QwertyMcQwertz/debunkr.org-dashboard/releases/latest)** from the latest release
+1. Download `debunkr-dashboard-firefox.xpi` from the [latest release](https://github.com/QwertyMcQwertz/debunkr.org-dashboard/releases/latest)
 2. Go to `about:debugging` → This Firefox
 3. Click "Load Temporary Add-on" → Select the `.xpi` file
 4. ✅ Extension installed!
 
 **🌐 Chrome/Edge/Brave**  
-1. **[Download `debunkr-dashboard-chrome.zip`](https://github.com/QwertyMcQwertz/debunkr.org-dashboard/releases/latest)** from the latest release and extract it
+1. Download and extract `debunkr-dashboard-chrome.zip` from the [latest release](https://github.com/QwertyMcQwertz/debunkr.org-dashboard/releases/latest)
 2. Go to `chrome://extensions/` (or your browser's extension page)
 3. Enable "Developer mode" → Click "Load unpacked" 
 4. Select the extracted folder
